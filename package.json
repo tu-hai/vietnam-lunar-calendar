@@ -7,11 +7,13 @@
     "android": "expo run:android",
     "android:dev": "expo start --android --dev-client --port 8087",
     "build:android": "eas build --platform android --profile preview --local",
+    "android-local": "$env:JAVA_HOME=\"C:\\Program Files\\Eclipse Adoptium\\jdk-17.0.17.10-hotspot\"; $env:ANDROID_HOME = \"C:\\Users\\votuh\\AppData\\Local\\Android\\Sdk\"; $env:Path += \";$env:JAVA_HOME\\bin;$env:ANDROID_HOME\\platform-tools;$env:ANDROID_HOME\\emulator\"; npm run android",
     "ios": "expo run:ios",
     "web": "expo start --web --port 8087"
   },
   "dependencies": {
     "@expo/metro-runtime": "~3.2.3",
+    "@react-native-community/datetimepicker": "8.0.1",
     "expo": "~51.0.0",
     "expo-location": "~17.0.1",
     "expo-status-bar": "~1.12.1",

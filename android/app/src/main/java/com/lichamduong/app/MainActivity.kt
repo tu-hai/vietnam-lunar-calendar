@@ -2,6 +2,8 @@ package com.lichamduong.app
 
 import android.os.Build
 import android.os.Bundle
+import android.content.res.Configuration
+import java.util.Locale
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
@@ -12,6 +14,13 @@ import expo.modules.ReactActivityDelegateWrapper
 
 class MainActivity : ReactActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
+    // Set Vietnamese locale for DatePicker
+    val locale = Locale("vi", "VN")
+    Locale.setDefault(locale)
+    val config = Configuration()
+    config.setLocale(locale)
+    resources.updateConfiguration(config, resources.displayMetrics)
+    
     // Set the theme to AppTheme BEFORE onCreate to support
     // coloring the background, status bar, and navigation bar.
     // This is required for expo-splash-screen.

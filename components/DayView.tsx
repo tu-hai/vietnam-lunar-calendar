@@ -1,5 +1,6 @@
-import React, { useState, useRef, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, PanResponder } from "react-native";
+import React, { useState, useRef, useEffect, useMemo } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, PanResponder, ImageBackground, Platform } from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import * as Location from "expo-location";
 import { convertSolar2Lunar, getDayName, getYearCanChi, getGioHoangDao, getDayCanChi } from "../utils/lunarCalendar";
 import { getHolidaysForDate, getUpcomingEventsInMonth } from "../utils/holidays";
@@ -23,6 +24,7 @@ export default function DayView({ initialDate }: DayViewProps) {
   const [location, setLocation] = useState<string>("Đang tải...");
   const [temperature, setTemperature] = useState<string>("--°C");
   const [weatherIcon, setWeatherIcon] = useState<string>("🌡️");
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const day = selectedDate.getDate();
   const month = selectedDate.getMonth() + 1;
@@ -41,6 +43,34 @@ export default function DayView({ initialDate }: DayViewProps) {
   const upcomingEvents = isToday ? getUpcomingEventsInMonth(day, month, year) : [];
   const proverb = getProverbForDate(day, month, year);
 
+  // Vietnamese folk art patterns/emojis
+  const vietnameseFolkImages = useMemo(
+    () => [
+      { emoji: "🎋", name: "Cây tre" },
+      { emoji: "🏯", name: "Nhà sàn" },
+      { emoji: "🦆", name: "Vịt" },
+      { emoji: "🐓", name: "Gà" },
+      { emoji: "🐃", name: "Trâu" },
+      { emoji: "🎍", name: "Tre nứa" },
+      { emoji: "🌾", name: "Lúa" },
+      { emoji: "🏮", name: "Lồng đèn" },
+      { emoji: "🎏", name: "Cờ" },
+      { emoji: "🍵", name: "Trà" },
+      { emoji: "🥢", name: "Đũa" },
+      { emoji: "🎭", name: "Mặt nạ" },
+      { emoji: "🪁", name: "Diều" },
+      { emoji: "🎪", name: "Lều" },
+      { emoji: "🌸", name: "Hoa đào" },
+    ],
+    []
+  );
+
+  // Select background based on date (consistent for same date)
+  const backgroundPattern = useMemo(() => {
+    const index = (day + month + year) % vietnameseFolkImages.length;
+    return vietnameseFolkImages[index];
+  }, [day, month, year, vietnameseFolkImages]);
+
   const handlePrevDay = () => {
     const newDate = new Date(selectedDate);
     newDate.setDate(newDate.getDate() - 1);
@@ -51,6 +81,24 @@ export default function DayView({ initialDate }: DayViewProps) {
     const newDate = new Date(selectedDate);
     newDate.setDate(newDate.getDate() + 1);
     setSelectedDate(newDate);
+  };
+
+  const handleDateChange = (event: any, date?: Date) => {
+    if (Platform.OS === "android") {
+      setShowDatePicker(false);
+    }
+
+    if (date) {
+      setSelectedDate(date);
+    }
+
+    if (event.type === "dismissed" && Platform.OS === "ios") {
+      setShowDatePicker(false);
+    }
+  };
+
+  const handleMonthYearPress = () => {
+    setShowDatePicker(true);
   };
 
   // Get location and weather
@@ -97,25 +145,44 @@ export default function DayView({ initialDate }: DayViewProps) {
       const API_KEY = "bd5e378503939ddaee76f12ad7a97608";
       const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&units=metric&appid=${API_KEY}`;
 
+      console.log("Fetching weather from:", weatherUrl);
       const response = await fetch(weatherUrl);
       const weatherData = await response.json();
 
-      if (weatherData.main && weatherData.main.temp) {
+      console.log("Weather data received:", JSON.stringify(weatherData, null, 2));
+
+      // Check if API returned an error
+      if (weatherData.cod && weatherData.cod !== 200) {
+        console.log("Weather API error:", weatherData.message);
+        setTemperature("--°C");
+        setWeatherIcon("🌡️");
+        return;
+      }
+
+      if (weatherData.main && weatherData.main.temp !== undefined) {
         const temp = Math.round(weatherData.main.temp);
         setTemperature(`${temp}°C`);
+        console.log("Temperature set to:", `${temp}°C`);
 
         // Set weather icon based on condition
-        const weatherCondition = weatherData.weather[0].main.toLowerCase();
-        if (weatherCondition.includes("clear")) setWeatherIcon("☀️");
-        else if (weatherCondition.includes("cloud")) setWeatherIcon("☁️");
-        else if (weatherCondition.includes("rain")) setWeatherIcon("🌧️");
-        else if (weatherCondition.includes("snow")) setWeatherIcon("❄️");
-        else if (weatherCondition.includes("thunder")) setWeatherIcon("⛈️");
-        else setWeatherIcon("🌡️");
+        if (weatherData.weather && weatherData.weather.length > 0) {
+          const weatherCondition = weatherData.weather[0].main.toLowerCase();
+          if (weatherCondition.includes("clear")) setWeatherIcon("☀️");
+          else if (weatherCondition.includes("cloud")) setWeatherIcon("☁️");
+          else if (weatherCondition.includes("rain")) setWeatherIcon("🌧️");
+          else if (weatherCondition.includes("snow")) setWeatherIcon("❄️");
+          else if (weatherCondition.includes("thunder")) setWeatherIcon("⛈️");
+          else setWeatherIcon("🌡️");
+        }
+      } else {
+        console.log("Weather data structure unexpected:", weatherData);
+        setTemperature("--°C");
+        setWeatherIcon("🌡️");
       }
     } catch (error) {
       console.log("Error fetching weather:", error);
-      setTemperature("25°C");
+      setTemperature("--°C");
+      setWeatherIcon("🌡️");
     }
   };
 
@@ -142,9 +209,11 @@ export default function DayView({ initialDate }: DayViewProps) {
         {/* Header - month/year */}
         <View style={styles.headerRow}>
           <Text style={styles.locationText}>{location}</Text>
-          <Text style={styles.monthYearText}>
-            Tháng {month} - {year}
-          </Text>
+          <TouchableOpacity onPress={handleMonthYearPress}>
+            <Text style={styles.monthYearText}>
+              📅 Tháng {month} - {year}
+            </Text>
+          </TouchableOpacity>
           {/* <View style={styles.iconGroup}>
             <TouchableOpacity style={styles.iconButton}>
               <Text style={styles.iconText}>🔔</Text>
@@ -162,10 +231,32 @@ export default function DayView({ initialDate }: DayViewProps) {
           </Text>
         </View>
 
-        {/* Big date in center */}
+        {/* Big date in center with Vietnamese folk art background */}
         <View style={styles.bigDateSection}>
-          <Text style={styles.bigDateNumber}>{day}</Text>
-          <Text style={styles.dayOfWeekText}>{dayOfWeek.toUpperCase()}</Text>
+          {/* Background pattern with multiple emojis */}
+          <View style={styles.patternBackground}>
+            {[...Array(12)].map((_, i) => (
+              <Text
+                key={i}
+                style={[
+                  styles.patternEmoji,
+                  {
+                    left: `${(i * 30 + 10) % 90}%`,
+                    top: `${(i * 25 + 15) % 80}%`,
+                    transform: [{ rotate: `${(i * 30) % 360}deg` }],
+                  },
+                ]}
+              >
+                {backgroundPattern.emoji}
+              </Text>
+            ))}
+          </View>
+
+          {/* Date content */}
+          <View style={styles.dateContent}>
+            <Text style={styles.bigDateNumber}>{day}</Text>
+            <Text style={styles.dayOfWeekText}>{dayOfWeek.toUpperCase()}</Text>
+          </View>
         </View>
 
         {/* Proverb at bottom */}
@@ -264,6 +355,20 @@ export default function DayView({ initialDate }: DayViewProps) {
           )}
         </ScrollView>
       </View>
+
+      {/* Date Picker */}
+      {showDatePicker && (
+        <DateTimePicker
+          value={selectedDate}
+          mode="date"
+          display={Platform.OS === "ios" ? "spinner" : "default"}
+          onChange={handleDateChange}
+          maximumDate={new Date(2100, 11, 31)}
+          minimumDate={new Date(1900, 0, 1)}
+          locale="vi-VN"
+          textColor="#1A237E"
+        />
+      )}
     </View>
   );
 }
@@ -327,6 +432,24 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginTop: -30,
+    position: "relative",
+    overflow: "hidden",
+  },
+  patternBackground: {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+    opacity: 0.15,
+  },
+  patternEmoji: {
+    position: "absolute",
+    fontSize: 60,
+    opacity: 0.6,
+  },
+  dateContent: {
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 1,
   },
   bigDateNumber: {
     fontSize: 160,
