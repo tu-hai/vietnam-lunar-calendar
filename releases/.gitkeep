@@ -1,0 +1,2 @@
+# Đây là file giữ cho thư mục releases được track trong Git
+# File APK sẽ không được commit (xem .gitignore)

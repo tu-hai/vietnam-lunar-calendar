@@ -1,0 +1,18 @@
+{
+  "expo": {
+    "name": "Lịch Âm Dương",
+    "slug": "lich-am-duong",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "com.lichamduong.app"
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}
