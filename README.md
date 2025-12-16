@@ -113,4 +113,4 @@ MIT License
 
 ## Tác giả
 
-Phát triển bởi Võ Tứ Hải
+Phát triển bởi Võ Tứ Hải and Copilot
