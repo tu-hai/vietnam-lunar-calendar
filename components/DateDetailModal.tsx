@@ -28,7 +28,7 @@ export default function DateDetailModal({ day, month, year, onClose }: DateDetai
 
   return (
     <View style={styles.container}>
-      <ScrollView style={[styles.body]} showsVerticalScrollIndicator={false}>
+      <ScrollView style={[styles.body]} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 50 }}>
         {/* Dương lịch */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Dương lịch</Text>
@@ -83,8 +83,11 @@ export default function DateDetailModal({ day, month, year, onClose }: DateDetai
   );
 }
 
+const screenHeight = Dimensions.get("window").height;
+
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     backgroundColor: Colors.white,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
@@ -92,7 +95,7 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
   },
   body: {
-    maxHeight: 250,
+    flex: 1,
   },
   bodyWeek: {
     flex: 1,

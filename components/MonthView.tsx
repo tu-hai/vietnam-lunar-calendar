@@ -1,8 +1,9 @@
-import React, { useState } from "react";
-import { View, StyleSheet } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, StyleSheet, LayoutAnimation, Platform, UIManager } from "react-native";
 import MonthYearSelector from "./MonthYearSelector";
 import CalendarGrid from "./CalendarGrid";
 import DateDetailModal from "./DateDetailModal";
+import { useVerticalSwipeGesture } from "../hooks/useSwipeGesture";
 
 export default function MonthView() {
   const today = new Date();
@@ -20,6 +21,14 @@ export default function MonthView() {
     month: today.getMonth() + 1,
     year: today.getFullYear(),
   });
+
+  useEffect(() => {
+    if (Platform.OS === "android") {
+      if (UIManager.setLayoutAnimationEnabledExperimental) {
+        UIManager.setLayoutAnimationEnabledExperimental(true);
+      }
+    }
+  }, []);
 
   const handlePrevMonth = () => {
     if (currentMonth === 1) {
@@ -51,8 +60,23 @@ export default function MonthView() {
   };
 
   const toggleViewMode = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setViewMode(viewMode === "week" ? "month" : "week");
   };
+
+  const handleSwipeUp = () => {
+    if (viewMode === "month") {
+      toggleViewMode();
+    }
+  };
+
+  const handleSwipeDown = () => {
+    if (viewMode === "week") {
+      toggleViewMode();
+    }
+  };
+
+  const panResponder = useVerticalSwipeGesture(handleSwipeUp, handleSwipeDown);
 
   const handleDatePress = (day: number, month: number, year: number) => {
     setSelectedDate({ day, month, year });
@@ -63,15 +87,17 @@ export default function MonthView() {
     <View style={styles.container}>
       <MonthYearSelector month={currentMonth} year={currentYear} onPrevMonth={handlePrevMonth} onNextMonth={handleNextMonth} onToday={handleToday} viewMode={viewMode} onToggleView={toggleViewMode} />
 
-      <CalendarGrid
-        month={currentMonth}
-        year={currentYear}
-        onDatePress={handleDatePress}
-        selectedDay={selectedDate.day}
-        selectedMonth={selectedDate.month}
-        selectedYear={selectedDate.year}
-        viewMode={viewMode}
-      />
+      <View {...panResponder.panHandlers}>
+        <CalendarGrid
+          month={currentMonth}
+          year={currentYear}
+          onDatePress={handleDatePress}
+          selectedDay={selectedDate.day}
+          selectedMonth={selectedDate.month}
+          selectedYear={selectedDate.year}
+          viewMode={viewMode}
+        />
+      </View>
 
       <DateDetailModal day={selectedDate.day} month={selectedDate.month} year={selectedDate.year} onClose={() => setShowModal(false)} />
     </View>

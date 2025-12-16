@@ -87,13 +87,13 @@ const styles = StyleSheet.create({
     height: 50,
   },
   iconContainerActive: {
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.darkBlue,
     borderRadius: 25,
     width: 110, // Expand width for label
     flexDirection: "row", // Show icon and label side by side
     alignItems: "center",
     justifyContent: "center",
-    top: 0, // Float slightly higher
+    top: 6, // Float slightly higher
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
