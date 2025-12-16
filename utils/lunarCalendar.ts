@@ -3,6 +3,8 @@
  * Dựa trên thuật toán của Hồ Ngọc Đức
  */
 
+import { CAN_NAMES, CHI_NAMES, LUNAR_MONTH_NAMES, LUNAR_DAY_NAMES, GIO_HOANG_DAO_TABLE, TIME_RANGES, ZODIAC_ICONS } from "./constants";
+
 export interface LunarDate {
   day: number;
   month: number;
@@ -205,14 +207,20 @@ export function convertLunar2Solar(lunarDay: number, lunarMonth: number, lunarYe
 
 // Lấy tên Can
 export function getCanName(num: number): string {
-  const can = ["Canh", "Tân", "Nhâm", "Quý", "Giáp", "Ất", "Bính", "Đinh", "Mậu", "Kỷ"];
-  return can[num % 10];
+  // num=0 -> Canh (index 6 in CAN_NAMES)
+  return CAN_NAMES[(num + 6) % 10];
 }
 
 // Lấy tên Chi
+// Lấy tên Chi
 export function getChiName(num: number): string {
-  const chi = ["Thân", "Dậu", "Tuất", "Hợi", "Tý", "Sửu", "Dần", "Mão", "Thìn", "Tỵ", "Ngọ", "Mùi"];
-  return chi[num % 12];
+  // num=0 -> Thân (index 8 in CHI_NAMES ["Tý", ... "Thân"...])
+  // CHI_NAMES: Tý(0), Sửu(1), Dân(2), Mão(3), Thìn(4), Tỵ(5), Ngọ(6), Mùi(7), Thân(8), Dậu(9), Tuất(10), Hợi(11)
+  // Original: ["Thân", "Dậu", "Tuất", "Hợi", "Tý", "Sửu", "Dần", "Mão", "Thìn", "Tỵ", "Ngọ", "Mùi"]
+  // num=0 -> Thân.
+  // Using CHI_NAMES: (num + 8) % 12 ?
+  // If num=0 -> 8 -> Thân. Correct.
+  return CHI_NAMES[(num + 8) % 12];
 }
 
 // Lấy tên Giáp Tý (năm âm lịch)
@@ -221,18 +229,17 @@ export function getYearCanChi(year: number): string {
 }
 
 // Lấy tên tháng âm lịch
+// Lấy tên tháng âm lịch
 export function getMonthName(lunarMonth: number, lunarLeap: boolean): string {
-  const monthNames = ["Tháng Giêng", "Tháng Hai", "Tháng Ba", "Tháng Tư", "Tháng Năm", "Tháng Sáu", "Tháng Bảy", "Tháng Tám", "Tháng Chín", "Tháng Mười", "Tháng Mười Một", "Tháng Chạp"];
-  const name = monthNames[lunarMonth - 1];
+  const name = LUNAR_MONTH_NAMES[lunarMonth - 1];
   return lunarLeap ? `${name} (Nhuận)` : name;
 }
 
 // Lấy tên ngày âm lịch
+// Lấy tên ngày âm lịch
 export function getDayName(lunarDay: number): string {
-  const dayNames = ["Mồng 1", "Mồng 2", "Mồng 3", "Mồng 4", "Mồng 5", "Mồng 6", "Mồng 7", "Mồng 8", "Mồng 9", "Mồng 10"];
-
   if (lunarDay <= 10) {
-    return dayNames[lunarDay - 1];
+    return LUNAR_DAY_NAMES[lunarDay - 1];
   }
   if (lunarDay === 20 || lunarDay === 30) {
     return `Ngày ${lunarDay}`;
@@ -241,10 +248,9 @@ export function getDayName(lunarDay: number): string {
 }
 
 // Lấy Can Chi của ngày
+// Lấy Can Chi của ngày
 export function getDayCanChi(jd: number): string {
-  const can = ["Giáp", "Ất", "Bính", "Đinh", "Mậu", "Kỷ", "Canh", "Tân", "Nhâm", "Quý"];
-  const chi = ["Tý", "Sửu", "Dần", "Mão", "Thìn", "Tỵ", "Ngọ", "Mùi", "Thân", "Dậu", "Tuất", "Hợi"];
-  return can[(jd + 9) % 10] + " " + chi[(jd + 1) % 12];
+  return CAN_NAMES[(jd + 9) % 10] + " " + CHI_NAMES[(jd + 1) % 12];
 }
 
 // Giờ hoàng đạo theo Can của ngày
@@ -261,31 +267,16 @@ export function getGioHoangDao(day: number, month: number, year: number): GioHoa
   const dayCanIndex = (jd + 9) % 10;
 
   // Bảng giờ hoàng đạo theo Can của ngày
-  const gioHoangDaoTable: { [key: number]: number[] } = {
-    0: [0, 2, 4, 6, 8, 10], // Giáp, Kỷ
-    1: [1, 3, 5, 7, 9, 11], // Ất, Canh
-    2: [0, 2, 4, 6, 8, 10], // Bính, Tân
-    3: [1, 3, 5, 7, 9, 11], // Đinh, Nhâm
-    4: [0, 2, 4, 6, 8, 10], // Mậu, Quý
-  };
-
   const canGroup = dayCanIndex % 5;
-  const hoangDaoHours = gioHoangDaoTable[canGroup];
-
-  const chiNames = ["Tý", "Sửu", "Dần", "Mão", "Thìn", "Tỵ", "Ngọ", "Mùi", "Thân", "Dậu", "Tuất", "Hợi"];
-  const timeRanges = ["23-1h", "1-3h", "3-5h", "5-7h", "7-9h", "9-11h", "11-13h", "13-15h", "15-17h", "17-19h", "19-21h", "21-23h"];
-
-  // Emoji con giáp
-  const zodiacIcons = ["🐭", "🐮", "🐯", "🐰", "🐲", "🐍", "🐴", "🐐", "🐵", "🐔", "🐶", "🐷"];
+  const hoangDaoHours = GIO_HOANG_DAO_TABLE[canGroup];
 
   const result: GioHoangDao[] = [];
-
   for (const hour of hoangDaoHours) {
     result.push({
-      gio: chiNames[hour],
-      canChi: chiNames[hour],
-      thoiGian: timeRanges[hour],
-      icon: zodiacIcons[hour],
+      gio: CHI_NAMES[hour],
+      canChi: CHI_NAMES[hour],
+      thoiGian: TIME_RANGES[hour],
+      icon: ZODIAC_ICONS[hour],
     });
   }
 

@@ -1,22 +1,24 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import React, { useState, useMemo } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from "react-native";
 import { convertSolar2Lunar } from "../utils/lunarCalendar";
-import { vietnamHolidays, getHolidaysForDate } from "../utils/holidays";
+import { getHolidaysForDate, getEventTheme } from "../utils/holidays";
+import { SOLAR_MONTH_NAMES } from "../utils/constants";
+import { Colors } from "../constants/Colors";
+import { Strings } from "../constants/Strings";
 
 interface EventsViewProps {
+  navigation?: any; // Add navigation prop
   onDateSelect?: (date: Date) => void;
 }
 
-export default function EventsView({ onDateSelect }: EventsViewProps) {
+export default function EventsView({ navigation, onDateSelect }: EventsViewProps) {
   const today = new Date();
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(today.getFullYear());
 
-  const monthNames = ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"];
-
   // Lấy tất cả sự kiện trong tháng dương lịch đã chọn
   // Duyệt từ ngày 1 đến ngày cuối tháng, lấy cả sự kiện dương lịch và âm lịch
-  const getAllEventsInMonth = () => {
+  const events = useMemo(() => {
     const events: Array<{
       day: number;
       month: number;
@@ -44,9 +46,7 @@ export default function EventsView({ onDateSelect }: EventsViewProps) {
     }
 
     return events.sort((a, b) => a.day - b.day);
-  };
-
-  const events = getAllEventsInMonth();
+  }, [selectedMonth, selectedYear]);
 
   const handlePrevMonth = () => {
     if (selectedMonth === 1) {
@@ -82,10 +82,10 @@ export default function EventsView({ onDateSelect }: EventsViewProps) {
 
         <View style={styles.centerSection}>
           <Text style={styles.headerTitle}>
-            {monthNames[selectedMonth - 1]} {selectedYear}
+            {SOLAR_MONTH_NAMES[selectedMonth - 1]} {selectedYear}
           </Text>
           <TouchableOpacity onPress={handleToday} style={styles.todayButton}>
-            <Text style={styles.todayButtonText}>Tháng này</Text>
+            <Text style={styles.todayButtonText}>{Strings.thisMonth}</Text>
           </TouchableOpacity>
         </View>
 
@@ -97,55 +97,73 @@ export default function EventsView({ onDateSelect }: EventsViewProps) {
       {/* Summary */}
       <View style={styles.summarySection}>
         <Text style={styles.summaryText}>
-          📅 {events.length} sự kiện trong tháng {selectedMonth}/{selectedYear}
+          📅 {events.length} {Strings.eventsInMonth} {selectedMonth}/{selectedYear}
         </Text>
-        <Text style={styles.summarySubtext}>{events.filter((e) => e.holiday.isPublicHoliday).length} ngày nghỉ lễ</Text>
+        <Text style={styles.summarySubtext}>
+          {events.filter((e) => e.holiday.isPublicHoliday).length} {Strings.publicHolidaysCount}
+        </Text>
       </View>
 
       {/* Events List */}
-      <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {events.length > 0 ? (
-          events.map((event, index) => {
-            const lunar = convertSolar2Lunar(event.day, event.month, event.year);
-
-            return (
-              <TouchableOpacity
-                key={index}
-                style={styles.eventCard}
-                onPress={() => {
-                  const selectedDate = new Date(event.year, event.month - 1, event.day);
-                  onDateSelect?.(selectedDate);
-                }}
-                activeOpacity={0.7}
-              >
-                <View style={styles.eventDateSection}>
-                  <Text style={styles.eventDay}>{event.day}</Text>
-                  <Text style={styles.eventMonth}>Tháng {event.month}</Text>
-                </View>
-
-                <View style={styles.eventInfoSection}>
-                  <Text style={[styles.eventName, event.holiday.isPublicHoliday && styles.publicHolidayName]}>{event.holiday.name}</Text>
-                  <Text style={styles.eventType}>
-                    {event.holiday.isLunar ? `Âm lịch: ${lunar.day}/${lunar.month}` : "Dương lịch"}
-                    {event.holiday.isPublicHoliday && " • Ngày nghỉ"}
-                  </Text>
-                </View>
-
-                {event.holiday.isPublicHoliday && (
-                  <View style={styles.publicHolidayBadge}>
-                    <Text style={styles.publicHolidayBadgeText}>Nghỉ</Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            );
-          })
-        ) : (
+      {/* Events List */}
+      <FlatList
+        data={events}
+        keyExtractor={(_, index) => index.toString()}
+        showsVerticalScrollIndicator={false}
+        style={styles.list}
+        contentContainerStyle={styles.listContent}
+        ListEmptyComponent={
           <View style={styles.noEventsContainer}>
             <Text style={styles.noEventsIcon}>📅</Text>
-            <Text style={styles.noEventsText}>Không có sự kiện nào trong tháng này</Text>
+            <Text style={styles.noEventsText}>{Strings.noEvents}</Text>
           </View>
-        )}
-      </ScrollView>
+        }
+        renderItem={({ item: event, index }) => {
+          const lunar = convertSolar2Lunar(event.day, event.month, event.year);
+          const theme = getEventTheme(event.holiday.name);
+
+          return (
+            <TouchableOpacity
+              style={[styles.eventCard, { backgroundColor: theme.bg, borderColor: theme.border, borderWidth: 1 }]}
+              onPress={() => {
+                const selectedDate = new Date(event.year, event.month - 1, event.day);
+                if (navigation) {
+                  navigation.navigate(Strings.calendarDay, { date: selectedDate.toISOString() });
+                } else {
+                  onDateSelect?.(selectedDate);
+                }
+              }}
+              activeOpacity={0.7}
+            >
+              {/* Watermark Background */}
+              <View style={styles.eventWatermark}>
+                <Text style={[styles.eventWatermarkIcon, { color: theme.iconColor }]}>{theme.emoji}</Text>
+              </View>
+
+              <View style={styles.eventDateSection}>
+                <Text style={styles.eventDay}>{event.day}</Text>
+                <Text style={styles.eventMonth}>
+                  {Strings.month} {event.month}
+                </Text>
+              </View>
+
+              <View style={styles.eventInfoSection}>
+                <Text style={[styles.eventName, event.holiday.isPublicHoliday && styles.publicHolidayName]}>{event.holiday.name}</Text>
+                <Text style={styles.eventType}>
+                  {event.holiday.isLunar ? `${Strings.lunar}: ${lunar.day}/${lunar.month}` : Strings.solar}
+                  {event.holiday.isPublicHoliday && ` ${Strings.publicHoliday}`}
+                </Text>
+              </View>
+
+              {event.holiday.isPublicHoliday && (
+                <View style={styles.publicHolidayBadge}>
+                  <Text style={styles.publicHolidayBadgeText}>{Strings.dayOff}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          );
+        }}
+      />
     </View>
   );
 }
@@ -161,16 +179,16 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: 15,
     paddingHorizontal: 20,
-    backgroundColor: "#fff",
+    backgroundColor: Colors.background,
     borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
+    borderBottomColor: Colors.border,
   },
   navButton: {
     padding: 10,
   },
   navButtonText: {
     fontSize: 20,
-    color: "#333",
+    color: Colors.text,
     fontWeight: "bold",
   },
   centerSection: {
@@ -180,58 +198,74 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#333",
+    color: Colors.text,
     textTransform: "uppercase",
   },
   todayButton: {
     marginTop: 8,
     paddingVertical: 5,
     paddingHorizontal: 12,
-    backgroundColor: "#4CAF50",
+    backgroundColor: Colors.primary,
     borderRadius: 12,
   },
   todayButtonText: {
     fontSize: 11,
-    color: "#fff",
+    color: Colors.white,
     fontWeight: "600",
   },
   summarySection: {
-    backgroundColor: "#fff",
+    backgroundColor: Colors.background,
     paddingVertical: 15,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
+    borderBottomColor: Colors.border,
   },
   summaryText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#333",
+    color: Colors.text,
     marginBottom: 5,
   },
   summarySubtext: {
     fontSize: 13,
-    color: "#888",
+    color: Colors.textMuted,
   },
-  scrollView: {
+  list: {
     flex: 1,
+  },
+  listContent: {
     padding: 15,
+    paddingBottom: 100,
   },
   eventCard: {
     flexDirection: "row",
-    backgroundColor: "#fff",
+    backgroundColor: Colors.background,
     borderRadius: 12,
     padding: 15,
     marginBottom: 12,
-    shadowColor: "#000",
+    shadowColor: Colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    overflow: "hidden", // Clip watermark
+    position: "relative",
+  },
+  eventWatermark: {
+    position: "absolute",
+    right: -10,
+    bottom: -15,
+    opacity: 0.15,
+    transform: [{ rotate: "-15deg" }],
+    zIndex: 0,
+  },
+  eventWatermarkIcon: {
+    fontSize: 100,
   },
   eventDateSection: {
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#4CAF50",
+    backgroundColor: Colors.primary,
     borderRadius: 10,
     paddingHorizontal: 15,
     paddingVertical: 10,
@@ -241,11 +275,11 @@ const styles = StyleSheet.create({
   eventDay: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#fff",
+    color: Colors.white,
   },
   eventMonth: {
     fontSize: 11,
-    color: "#fff",
+    color: Colors.white,
     marginTop: 2,
   },
   eventInfoSection: {
@@ -255,18 +289,18 @@ const styles = StyleSheet.create({
   eventName: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#333",
+    color: Colors.text,
     marginBottom: 5,
   },
   publicHolidayName: {
-    color: "#d32f2f",
+    color: Colors.publicHolidayText,
   },
   eventType: {
     fontSize: 13,
-    color: "#888",
+    color: Colors.textMuted,
   },
   publicHolidayBadge: {
-    backgroundColor: "#ffebee",
+    backgroundColor: Colors.publicHolidayBadge,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 12,
@@ -274,7 +308,7 @@ const styles = StyleSheet.create({
   },
   publicHolidayBadgeText: {
     fontSize: 11,
-    color: "#d32f2f",
+    color: Colors.publicHolidayText,
     fontWeight: "600",
   },
   noEventsContainer: {
@@ -288,6 +322,6 @@ const styles = StyleSheet.create({
   },
   noEventsText: {
     fontSize: 16,
-    color: "#888",
+    color: Colors.textMuted,
   },
 });

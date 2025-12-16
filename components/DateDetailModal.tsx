@@ -2,19 +2,18 @@ import React from "react";
 import { View, Text, StyleSheet, ScrollView, Dimensions } from "react-native";
 import { convertSolar2Lunar, getDayName, getYearCanChi, getGioHoangDao } from "../utils/lunarCalendar";
 import { getHolidaysForDate, getUpcomingEventsInMonth } from "../utils/holidays";
-
-const screenHeight = Dimensions.get("window").height;
+import { Colors } from "../constants/Colors";
+import HolidaySection from "./HolidaySection";
+import ZodiacHoursSection from "./ZodiacHoursSection";
 
 interface DateDetailModalProps {
-  visible: boolean;
   day: number;
   month: number;
   year: number;
   onClose: () => void;
-  viewMode?: "week" | "month";
 }
 
-export default function DateDetailModal({ visible, day, month, year, onClose, viewMode = "month" }: DateDetailModalProps) {
+export default function DateDetailModal({ day, month, year, onClose }: DateDetailModalProps) {
   const lunar = convertSolar2Lunar(day, month, year);
   const holidays = getHolidaysForDate(day, month, year);
   const yearCanChi = getYearCanChi(lunar.year);
@@ -24,16 +23,12 @@ export default function DateDetailModal({ visible, day, month, year, onClose, vi
   const date = new Date(year, month - 1, day);
   const dayOfWeek = weekDays[date.getDay()];
 
-  // Kiểm tra có phải ngày hiện tại không
-  const today = new Date();
-  const isToday = day === today.getDate() && month === today.getMonth() + 1 && year === today.getFullYear();
-
   // Lấy sự kiện sắp tới nếu đang xem ngày hiện tại
-  const upcomingEvents = isToday ? getUpcomingEventsInMonth(day, month, year) : [];
+  const upcomingEvents = getUpcomingEventsInMonth(day, month, year);
 
   return (
     <View style={styles.container}>
-      <ScrollView style={[styles.body, viewMode === "week" && styles.bodyWeek]} showsVerticalScrollIndicator={false}>
+      <ScrollView style={[styles.body]} showsVerticalScrollIndicator={false}>
         {/* Dương lịch */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Dương lịch</Text>
@@ -53,43 +48,13 @@ export default function DateDetailModal({ visible, day, month, year, onClose, vi
         </View>
 
         {/* Ngày lễ */}
-        {holidays.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Ngày lễ</Text>
-            {holidays.map((holiday, index) => (
-              <View key={index} style={styles.holidayItem}>
-                <View style={[styles.holidayDot, holiday.isPublicHoliday && styles.publicHolidayDot]} />
-                <View style={styles.holidayInfo}>
-                  <Text style={[styles.holidayName, holiday.isPublicHoliday && styles.publicHolidayText]}>{holiday.name}</Text>
-                  <Text style={styles.holidayType}>
-                    {holiday.isLunar ? "Âm lịch" : "Dương lịch"}
-                    {holiday.isPublicHoliday && " • Ngày nghỉ"}
-                  </Text>
-                </View>
-              </View>
-            ))}
-          </View>
-        )}
+        <HolidaySection holidays={holidays} />
 
         {/* Giờ hoàng đạo */}
-        <View style={styles.gioHoangDaoSection}>
-          <View style={styles.gioHeader}>
-            <Text style={styles.gioHeaderIcon}>⏰</Text>
-            <Text style={styles.gioHeaderText}>Giờ Hoàng đạo</Text>
-          </View>
-          <View style={styles.gioHoangDaoContainer}>
-            {gioHoangDao.map((gio, index) => (
-              <View key={index} style={styles.gioItem}>
-                <Text style={styles.gioIcon}>{gio.icon}</Text>
-                <Text style={styles.gioName}>{gio.gio}</Text>
-                <Text style={styles.gioTime}>{gio.thoiGian}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
+        <ZodiacHoursSection gioHoangDao={gioHoangDao} />
 
         {/* Sự kiện sắp tới - chỉ hiển thị khi xem ngày hiện tại */}
-        {isToday && upcomingEvents.length > 0 && (
+        {upcomingEvents.length > 0 && (
           <View style={styles.upcomingSection}>
             <View style={styles.upcomingHeader}>
               <Text style={styles.upcomingHeaderIcon}>📅</Text>
@@ -120,9 +85,9 @@ export default function DateDetailModal({ visible, day, month, year, onClose, vi
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
     borderTopWidth: 1,
-    borderTopColor: "#e0e0e0",
+    borderTopColor: Colors.border,
     paddingHorizontal: 20,
     paddingVertical: 15,
   },
@@ -138,114 +103,37 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#666",
+    color: Colors.textSecondary,
     marginBottom: 8,
     textTransform: "uppercase",
   },
   dateText: {
     fontSize: 18,
     fontWeight: "600",
-    color: "#333",
+    color: Colors.text,
   },
   subText: {
     fontSize: 14,
-    color: "#888",
+    color: Colors.textMuted,
     marginTop: 4,
   },
-  holidayItem: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    marginBottom: 12,
-  },
-  holidayDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#ff9800",
-    marginRight: 10,
-    marginTop: 6,
-  },
-  publicHolidayDot: {
-    backgroundColor: "#f44336",
-  },
-  holidayInfo: {
-    flex: 1,
-  },
-  holidayName: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-  },
-  publicHolidayText: {
-    color: "#d32f2f",
-  },
-  holidayType: {
-    fontSize: 12,
-    color: "#888",
-    marginTop: 2,
-  },
+  // Removed unused holiday style
   gioHoangDaoSection: {
-    backgroundColor: "#f0f8f5",
+    backgroundColor: Colors.lightGray,
     borderRadius: 16,
     padding: 16,
     marginBottom: 20,
     position: "relative",
     overflow: "hidden",
   },
-  gioHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  gioHeaderIcon: {
-    fontSize: 18,
-    marginRight: 8,
-    color: "#666",
-  },
-  gioHeaderText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#666",
-  },
-  gioHoangDaoContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12,
-  },
-  gioItem: {
-    alignItems: "center",
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    minWidth: 70,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  gioIcon: {
-    fontSize: 32,
-    marginBottom: 6,
-  },
-  gioName: {
-    fontSize: 13,
-    fontWeight: "700",
-    color: "#333",
-    marginBottom: 3,
-  },
-  gioTime: {
-    fontSize: 10,
-    color: "#888",
-  },
+  // Removed unused gio styles
   upcomingSection: {
-    backgroundColor: "#fff9e6",
+    backgroundColor: "#fff9e6", // Keeping as specific highlight for now or convert to Colors if exists
     borderRadius: 16,
     padding: 16,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: "#ffe599",
+    borderColor: "#ffe599", // Keeping specific
   },
   upcomingHeader: {
     flexDirection: "row",
@@ -259,16 +147,16 @@ const styles = StyleSheet.create({
   upcomingHeaderText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#666",
+    color: Colors.textSecondary,
   },
   upcomingEventItem: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#fff",
+    backgroundColor: Colors.white,
     borderRadius: 12,
     padding: 12,
     marginBottom: 10,
-    shadowColor: "#000",
+    shadowColor: Colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -278,7 +166,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   upcomingDayBadge: {
-    backgroundColor: "#4CAF50",
+    backgroundColor: Colors.primary,
     borderRadius: 10,
     paddingVertical: 8,
     paddingHorizontal: 12,
@@ -288,11 +176,11 @@ const styles = StyleSheet.create({
   upcomingDayNumber: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#fff",
+    color: Colors.white,
   },
   upcomingDayLabel: {
     fontSize: 10,
-    color: "#fff",
+    color: Colors.white,
     marginTop: 2,
   },
   upcomingEventRight: {
@@ -301,14 +189,14 @@ const styles = StyleSheet.create({
   upcomingEventName: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#333",
+    color: Colors.text,
     marginBottom: 4,
   },
   upcomingPublicHoliday: {
-    color: "#d32f2f",
+    color: Colors.publicHolidayText,
   },
   upcomingEventDate: {
     fontSize: 12,
-    color: "#888",
+    color: Colors.textMuted,
   },
 });

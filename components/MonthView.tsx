@@ -8,6 +8,7 @@ export default function MonthView() {
   const today = new Date();
   const [currentMonth, setCurrentMonth] = useState(today.getMonth() + 1);
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
+  const [showModal, setShowModal] = useState(false);
   const [viewMode, setViewMode] = useState<"week" | "month">("month");
 
   const [selectedDate, setSelectedDate] = useState<{
@@ -49,12 +50,13 @@ export default function MonthView() {
     });
   };
 
-  const handleDatePress = (day: number, month: number, year: number) => {
-    setSelectedDate({ day, month, year });
-  };
-
   const toggleViewMode = () => {
     setViewMode(viewMode === "week" ? "month" : "week");
+  };
+
+  const handleDatePress = (day: number, month: number, year: number) => {
+    setSelectedDate({ day, month, year });
+    setShowModal(true);
   };
 
   return (
@@ -71,7 +73,7 @@ export default function MonthView() {
         viewMode={viewMode}
       />
 
-      <DateDetailModal visible={true} day={selectedDate.day} month={selectedDate.month} year={selectedDate.year} onClose={() => {}} viewMode={viewMode} />
+      <DateDetailModal day={selectedDate.day} month={selectedDate.month} year={selectedDate.year} onClose={() => setShowModal(false)} />
     </View>
   );
 }
