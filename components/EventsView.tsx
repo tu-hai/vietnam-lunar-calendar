@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, FlatList } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, LayoutAnimation, Platform, UIManager } from "react-native";
 import { convertSolar2Lunar } from "../utils/lunarCalendar";
-import { getHolidaysForDate, getEventTheme } from "../utils/holidays";
+import { getEventTheme } from "../utils/holidays";
+import { useMonthlyEvents } from "../hooks/useEvents";
 import { SOLAR_MONTH_NAMES } from "../utils/constants";
 import { Colors } from "../constants/Colors";
 import { Strings } from "../constants/Strings";
@@ -16,39 +17,20 @@ export default function EventsView({ navigation, onDateSelect }: EventsViewProps
   const [selectedMonth, setSelectedMonth] = useState(today.getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(today.getFullYear());
 
-  // Lấy tất cả sự kiện trong tháng dương lịch đã chọn
-  // Duyệt từ ngày 1 đến ngày cuối tháng, lấy cả sự kiện dương lịch và âm lịch
-  const events = useMemo(() => {
-    const events: Array<{
-      day: number;
-      month: number;
-      year: number;
-      holiday: any;
-    }> = [];
-
-    // Lấy số ngày trong tháng được chọn
-    const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
-
-    // Duyệt qua từng ngày trong tháng dương lịch
-    for (let day = 1; day <= daysInMonth; day++) {
-      // getHolidaysForDate sẽ trả về cả sự kiện dương lịch và âm lịch
-      // cho ngày dương lịch cụ thể này
-      const holidays = getHolidaysForDate(day, selectedMonth, selectedYear);
-
-      holidays.forEach((holiday) => {
-        events.push({
-          day,
-          month: selectedMonth,
-          year: selectedYear,
-          holiday,
-        });
-      });
+  // Enable LayoutAnimation on Android
+  useEffect(() => {
+    if (Platform.OS === "android") {
+      if (UIManager.setLayoutAnimationEnabledExperimental) {
+        UIManager.setLayoutAnimationEnabledExperimental(true);
+      }
     }
+  }, []);
 
-    return events.sort((a, b) => a.day - b.day);
-  }, [selectedMonth, selectedYear]);
+  // Use custom hook for events calculation
+  const events = useMonthlyEvents(selectedMonth, selectedYear);
 
   const handlePrevMonth = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     if (selectedMonth === 1) {
       setSelectedMonth(12);
       setSelectedYear(selectedYear - 1);
@@ -58,6 +40,7 @@ export default function EventsView({ navigation, onDateSelect }: EventsViewProps
   };
 
   const handleNextMonth = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     if (selectedMonth === 12) {
       setSelectedMonth(1);
       setSelectedYear(selectedYear + 1);
@@ -67,6 +50,7 @@ export default function EventsView({ navigation, onDateSelect }: EventsViewProps
   };
 
   const handleToday = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     const today = new Date();
     setSelectedMonth(today.getMonth() + 1);
     setSelectedYear(today.getFullYear());

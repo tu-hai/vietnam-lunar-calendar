@@ -1,61 +1,92 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { Text, StyleSheet, View, Platform } from "react-native";
+import { Text, StyleSheet, View, Image } from "react-native";
 import DayView from "../components/DayView";
 import MonthView from "../components/MonthView";
 import EventsView from "../components/EventsView";
 import InfoView from "../components/InfoView";
+import ScreenWrapper from "../components/ScreenWrapper";
 import { Colors } from "../constants/Colors";
 import { Strings } from "../constants/Strings";
 
 const Tab = createBottomTabNavigator();
+
+// Wrapped Components for Transition
+const DayScreen = (props: any) => (
+  <ScreenWrapper>
+    <DayView {...props} />
+  </ScreenWrapper>
+);
+const MonthScreen = (props: any) => (
+  <ScreenWrapper>
+    <MonthView {...props} />
+  </ScreenWrapper>
+);
+const EventsScreen = (props: any) => (
+  <ScreenWrapper>
+    <EventsView {...props} />
+  </ScreenWrapper>
+);
+const InfoScreen = (props: any) => (
+  <ScreenWrapper>
+    <InfoView {...props} />
+  </ScreenWrapper>
+);
 
 export default function BottomTabNavigator() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
+        freezeOnBlur: true,
         tabBarStyle: styles.tabBar,
         tabBarShowLabel: false, // Hide default labels to use custom ones if needed, or just icons
         tabBarIcon: ({ focused }) => {
-          let iconName;
+          let iconSource;
           let label;
+          const isDayTab = route.name === Strings.calendarDay;
 
           switch (route.name) {
             case Strings.calendarDay:
-              iconName = "📅";
+              iconSource = require("../assets/icon.png");
               label = "Ngày";
               break;
             case Strings.calendarMonth:
-              iconName = "🗓️";
               label = "Tháng";
               break;
             case Strings.events:
-              iconName = "✨";
               label = "Sự kiện";
               break;
             case Strings.info:
-              iconName = "ℹ️";
               label = "Thông tin";
               break;
             default:
-              iconName = "📅";
               label = "Tab";
           }
 
+          // Fallback emojis for other tabs if we don't have images yet
+          let iconEmoji;
+          if (route.name === Strings.calendarMonth) iconEmoji = "🗓️";
+          if (route.name === Strings.events) iconEmoji = "✨";
+          if (route.name === Strings.info) iconEmoji = "ℹ️";
+
           return (
             <View style={[styles.iconContainer, focused && styles.iconContainerActive]}>
-              <Text style={[styles.icon, focused && styles.iconActive]}>{iconName}</Text>
+              {isDayTab ? (
+                <Image source={iconSource} style={[styles.tabIconImage, focused && styles.tabIconImageActive]} resizeMode="contain" />
+              ) : (
+                <Text style={[styles.icon, focused && styles.iconActive]}>{iconEmoji}</Text>
+              )}
               {focused ? <Text style={styles.labelActive}>{label}</Text> : <Text style={styles.labelInactive}>{label}</Text>}
             </View>
           );
         },
       })}
     >
-      <Tab.Screen name={Strings.calendarDay} component={DayView} />
-      <Tab.Screen name={Strings.calendarMonth} component={MonthView} />
-      <Tab.Screen name={Strings.events} component={EventsView} />
-      <Tab.Screen name={Strings.info} component={InfoView} />
+      <Tab.Screen name={Strings.calendarDay} component={DayScreen} />
+      <Tab.Screen name={Strings.calendarMonth} component={MonthScreen} />
+      <Tab.Screen name={Strings.events} component={EventsScreen} />
+      <Tab.Screen name={Strings.info} component={InfoScreen} />
     </Tab.Navigator>
   );
 }
@@ -104,6 +135,19 @@ const styles = StyleSheet.create({
   icon: {
     fontSize: 24,
     marginBottom: 0,
+  },
+  tabIconImage: {
+    width: 24,
+    height: 24,
+    marginBottom: 0,
+    borderRadius: 4,
+  },
+  tabIconImageActive: {
+    width: 20,
+    height: 20,
+    marginRight: 6,
+    borderRadius: 4,
+    backgroundColor: "white", // Small border effect to make it pop against dark blue
   },
   iconActive: {
     fontSize: 20,

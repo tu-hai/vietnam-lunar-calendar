@@ -1,19 +1,19 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { convertSolar2Lunar, getDayName } from "../utils/lunarCalendar";
+import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
 import { getHolidaysForDate } from "../utils/holidays";
+import { convertSolar2Lunar } from "../utils/lunarCalendar";
 
 interface DateCellProps {
   day: number;
   month: number;
   year: number;
-  isCurrentMonth: boolean;
-  isToday: boolean;
-  isSelected: boolean;
+  isCurrentMonth?: boolean;
+  isToday?: boolean;
+  isSelected?: boolean;
   onPress: (day: number, month: number, year: number) => void;
 }
 
-export default function DateCell({ day, month, year, isCurrentMonth, isToday, isSelected, onPress }: DateCellProps) {
+const DateCell = React.memo(({ day, month, year, isCurrentMonth, isToday, isSelected, onPress }: DateCellProps) => {
   const lunar = convertSolar2Lunar(day, month, year);
   const holidays = getHolidaysForDate(day, month, year);
   const hasHoliday = holidays.length > 0;
@@ -30,7 +30,9 @@ export default function DateCell({ day, month, year, isCurrentMonth, isToday, is
       </View>
     </TouchableOpacity>
   );
-}
+});
+
+export default DateCell;
 
 const styles = StyleSheet.create({
   cell: {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, LayoutAnimation, UIManager } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, LayoutAnimation, UIManager, InteractionManager, ActivityIndicator } from "react-native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { convertSolar2Lunar, getYearCanChi, getGioHoangDao, getDayCanChi } from "../utils/lunarCalendar";
 import { useLocation } from "../hooks/useLocation";
@@ -31,6 +31,14 @@ export default function DayView({ route, initialDate }: DayViewProps) {
   const paramDate = route?.params?.date ? new Date(route.params.date) : null;
   const [selectedDate, setSelectedDate] = useState(paramDate || initialDate || today);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isInteractionsComplete, setIsInteractionsComplete] = useState(false);
+
+  useEffect(() => {
+    const interactionPromise = InteractionManager.runAfterInteractions(() => {
+      setIsInteractionsComplete(true);
+    });
+    return () => interactionPromise.cancel();
+  }, []);
 
   // Update selectedDate when route params change
   useEffect(() => {
@@ -148,6 +156,14 @@ export default function DayView({ route, initialDate }: DayViewProps) {
   // Swipe gesture handlers
   const panResponder = useSwipeGesture(handleNextDay, handlePrevDay, swipeThreshold);
   const verticalPanResponder = useVerticalSwipeGesture(handleSwipeUp, handleSwipeDown, 30); // 30 threshold for easier vertical swipe
+
+  if (!isInteractionsComplete) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -288,8 +304,8 @@ export default function DayView({ route, initialDate }: DayViewProps) {
           mode="date"
           display={Platform.OS === "ios" ? "spinner" : "default"}
           onChange={handleDateChange}
-          maximumDate={new Date(2100, 11, 31)}
-          minimumDate={new Date(1900, 0, 1)}
+          maximumDate={new Date(2050, 11, 31)}
+          minimumDate={new Date(1945, 0, 1)}
           locale="vi-VN"
           textColor={Colors.darkBlue}
         />
@@ -460,6 +476,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 20,
     width: "100%",
+    paddingBottom: 20,
   },
   bottomSheetCollapsed: {
     flex: 1,
@@ -584,5 +601,9 @@ const styles = StyleSheet.create({
   upcomingEventDate: {
     fontSize: 14,
     color: Colors.textMuted,
+  },
+  loadingContainer: {
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

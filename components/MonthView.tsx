@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, LayoutAnimation, Platform, UIManager } from "react-native";
+import { View, StyleSheet, LayoutAnimation, Platform, UIManager, InteractionManager, ActivityIndicator } from "react-native";
 import MonthYearSelector from "./MonthYearSelector";
 import CalendarGrid from "./CalendarGrid";
 import DateDetailModal from "./DateDetailModal";
@@ -28,6 +28,14 @@ export default function MonthView() {
         UIManager.setLayoutAnimationEnabledExperimental(true);
       }
     }
+  }, []);
+
+  const [isReady, setIsReady] = useState(false);
+  useEffect(() => {
+    const interaction = InteractionManager.runAfterInteractions(() => {
+      setIsReady(true);
+    });
+    return () => interaction.cancel();
   }, []);
 
   const handlePrevMonth = () => {
@@ -88,15 +96,21 @@ export default function MonthView() {
       <MonthYearSelector month={currentMonth} year={currentYear} onPrevMonth={handlePrevMonth} onNextMonth={handleNextMonth} onToday={handleToday} viewMode={viewMode} onToggleView={toggleViewMode} />
 
       <View {...panResponder.panHandlers}>
-        <CalendarGrid
-          month={currentMonth}
-          year={currentYear}
-          onDatePress={handleDatePress}
-          selectedDay={selectedDate.day}
-          selectedMonth={selectedDate.month}
-          selectedYear={selectedDate.year}
-          viewMode={viewMode}
-        />
+        {isReady ? (
+          <CalendarGrid
+            month={currentMonth}
+            year={currentYear}
+            onDatePress={handleDatePress}
+            selectedDay={selectedDate.day}
+            selectedMonth={selectedDate.month}
+            selectedYear={selectedDate.year}
+            viewMode={viewMode}
+          />
+        ) : (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#1976d2" />
+          </View>
+        )}
       </View>
 
       <DateDetailModal day={selectedDate.day} month={selectedDate.month} year={selectedDate.year} onClose={() => setShowModal(false)} />
@@ -108,5 +122,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    height: 400,
   },
 });

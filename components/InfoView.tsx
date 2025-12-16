@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Alert, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Alert, ActivityIndicator, Image } from "react-native";
 
 export default function InfoView() {
   const version = "1.0.0";
@@ -74,9 +74,7 @@ export default function InfoView() {
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
         {/* App Info */}
         <View style={styles.appInfoSection}>
-          <View style={styles.appIcon}>
-            <Text style={styles.appIconText}>📅</Text>
-          </View>
+          <Image source={require("../assets/icon.png")} style={styles.appIconImage} />
           <Text style={styles.appName}>Lịch Âm Dương</Text>
           <Text style={styles.appSlogan}>Lịch Việt - Theo dõi ngày giờ tốt</Text>
         </View>
@@ -131,10 +129,6 @@ export default function InfoView() {
           <View style={styles.guideStep}>
             <Text style={styles.stepNumber}>5️⃣</Text>
             <Text style={styles.stepText}>Đợi quá trình cài đặt hoàn tất và mở ứng dụng</Text>
-          </View>
-          <View style={styles.noteBox}>
-            <Text style={styles.noteIcon}>💡</Text>
-            <Text style={styles.noteText}>Lưu ý: Dữ liệu của bạn sẽ được giữ nguyên khi cập nhật</Text>
           </View>
         </View>
 
@@ -217,17 +211,11 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
     backgroundColor: "#fff",
   },
-  appIcon: {
+  appIconImage: {
     width: 100,
     height: 100,
     borderRadius: 20,
-    backgroundColor: "#4CAF50",
-    alignItems: "center",
-    justifyContent: "center",
     marginBottom: 15,
-  },
-  appIconText: {
-    fontSize: 50,
   },
   appName: {
     fontSize: 24,
