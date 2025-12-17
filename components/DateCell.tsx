@@ -15,7 +15,7 @@ interface DateCellProps {
 
 const DateCell = React.memo(({ day, month, year, isCurrentMonth, isToday, isSelected, onPress }: DateCellProps) => {
   const lunar = convertSolar2Lunar(day, month, year);
-  const holidays = getHolidaysForDate(day, month, year);
+  const holidays = getHolidaysForDate(day, month, year, lunar);
   const hasHoliday = holidays.length > 0;
   const isPublicHoliday = holidays.some((h) => h.isPublicHoliday);
 

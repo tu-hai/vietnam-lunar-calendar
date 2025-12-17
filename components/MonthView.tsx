@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { View, StyleSheet, LayoutAnimation, Platform, UIManager, InteractionManager, ActivityIndicator } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { View, StyleSheet, LayoutAnimation, Platform, UIManager, InteractionManager, ActivityIndicator, Animated, Easing } from "react-native";
 import MonthYearSelector from "./MonthYearSelector";
 import CalendarGrid from "./CalendarGrid";
 import DateDetailModal from "./DateDetailModal";
@@ -22,6 +22,10 @@ export default function MonthView() {
     year: today.getFullYear(),
   });
 
+  // Animation values
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
+
   useEffect(() => {
     if (Platform.OS === "android") {
       if (UIManager.setLayoutAnimationEnabledExperimental) {
@@ -37,6 +41,26 @@ export default function MonthView() {
     });
     return () => interaction.cancel();
   }, []);
+
+  // Trigger animation when month/year changes
+  useEffect(() => {
+    fadeAnim.setValue(0);
+    slideAnim.setValue(20);
+
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 300,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [currentMonth, currentYear, viewMode]);
 
   const handlePrevMonth = () => {
     if (currentMonth === 1) {
@@ -95,17 +119,25 @@ export default function MonthView() {
     <View style={styles.container}>
       <MonthYearSelector month={currentMonth} year={currentYear} onPrevMonth={handlePrevMonth} onNextMonth={handleNextMonth} onToday={handleToday} viewMode={viewMode} onToggleView={toggleViewMode} />
 
-      <View {...panResponder.panHandlers}>
+      <View {...panResponder.panHandlers} style={{ flex: 1 }}>
         {isReady ? (
-          <CalendarGrid
-            month={currentMonth}
-            year={currentYear}
-            onDatePress={handleDatePress}
-            selectedDay={selectedDate.day}
-            selectedMonth={selectedDate.month}
-            selectedYear={selectedDate.year}
-            viewMode={viewMode}
-          />
+          <Animated.View
+            style={{
+              flex: 1,
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }],
+            }}
+          >
+            <CalendarGrid
+              month={currentMonth}
+              year={currentYear}
+              onDatePress={handleDatePress}
+              selectedDay={selectedDate.day}
+              selectedMonth={selectedDate.month}
+              selectedYear={selectedDate.year}
+              viewMode={viewMode}
+            />
+          </Animated.View>
         ) : (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color="#1976d2" />

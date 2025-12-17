@@ -228,7 +228,8 @@ export default function DayView({ route, initialDate }: DayViewProps) {
         {/* Proverb */}
         {!isExpanded && (
           <View style={styles.proverbContainer}>
-            <Text style={styles.proverbText}>“{proverb}”</Text>
+            <Text style={styles.proverbText}>“{proverb.content}”</Text>
+            <Text style={styles.proverbAuthor}>- {proverb.author} -</Text>
           </View>
         )}
       </View>
@@ -486,6 +487,12 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     textAlign: "center",
     lineHeight: 24,
+  },
+  proverbAuthor: {
+    fontSize: 12,
+    color: Colors.textMuted,
+    marginTop: 4,
+    fontWeight: "500",
   },
   bottomSheet: {
     backgroundColor: Colors.background,

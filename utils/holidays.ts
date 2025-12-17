@@ -183,7 +183,7 @@ export const vietnamHolidays: Holiday[] = [
 ];
 
 // Lấy các ngày lễ cho một ngày cụ thể
-export function getHolidaysForDate(day: number, month: number, year: number): Holiday[] {
+export function getHolidaysForDate(day: number, month: number, year: number, lunarDate?: { day: number; month: number; year: number; leap: boolean }): Holiday[] {
   const holidays: Holiday[] = [];
   const dateStr = `${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 
@@ -192,7 +192,7 @@ export function getHolidaysForDate(day: number, month: number, year: number): Ho
   holidays.push(...solarHolidays);
 
   // Kiểm tra ngày lễ âm lịch
-  const lunar = convertSolar2Lunar(day, month, year);
+  const lunar = lunarDate || convertSolar2Lunar(day, month, year);
   const lunarDateStr = `${String(lunar.month).padStart(2, "0")}-${String(lunar.day).padStart(2, "0")}`;
 
   // Lọc sự kiện âm lịch với logic đặc biệt cho các ngày cuối năm và đầu năm âm
