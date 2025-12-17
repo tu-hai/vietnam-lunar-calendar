@@ -1,10 +1,15 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Alert, ActivityIndicator, Image } from "react-native";
 
+import * as FileSystem from "expo-file-system";
+import * as IntentLauncher from "expo-intent-launcher";
+
 export default function InfoView() {
   const version = "1.0.0";
   const buildNumber = "1";
   const [isChecking, setIsChecking] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const compareVersions = (v1: string, v2: string) => {
     const parts1 = v1.split(".").map(Number);
@@ -19,6 +24,39 @@ export default function InfoView() {
     return 0;
   };
 
+  const downloadAndInstallAPK = async (url: string) => {
+    setIsDownloading(true);
+    setDownloadProgress(0);
+    const callback = (downloadProgress: any) => {
+      const progress = downloadProgress.totalBytesWritten / downloadProgress.totalBytesExpectedToWrite;
+      setDownloadProgress(progress);
+    };
+
+    const downloadResumable = FileSystem.createDownloadResumable(url, FileSystem.cacheDirectory + "update.apk", {}, callback);
+
+    try {
+      const { uri } = (await downloadResumable.downloadAsync()) || {};
+      if (uri) {
+        // Android 7+ requires content URI
+        const contentUri = await FileSystem.getContentUriAsync(uri);
+        await IntentLauncher.startActivityAsync("android.intent.action.VIEW", {
+          data: contentUri,
+          flags: 1,
+          type: "application/vnd.android.package-archive",
+        });
+      }
+    } catch (e) {
+      console.error(e);
+      Alert.alert("Lỗi", "Không thể tải xuống bản cập nhật. Vui lòng thử lại hoặc tải từ GitHub.", [
+        { text: "Đóng", style: "cancel" },
+        { text: "Mở GitHub", onPress: () => Linking.openURL(url) },
+      ]);
+    } finally {
+      setIsDownloading(false);
+      setDownloadProgress(0);
+    }
+  };
+
   const handleCheckUpdate = async () => {
     setIsChecking(true);
 
@@ -31,27 +69,26 @@ export default function InfoView() {
 
       const data = await response.json();
       const latestVersion = data.tag_name.replace("v", "");
-      const downloadUrl = data.html_url;
+      // Get the first asset that ends with .apk
+      const apkAsset = data.assets.find((asset: any) => asset.name.endsWith(".apk"));
+      const downloadUrl = apkAsset ? apkAsset.browser_download_url : data.html_url;
+      const isDirectApk = !!apkAsset;
 
       const comparison = compareVersions(latestVersion, version);
 
       if (comparison > 0) {
-        Alert.alert(
-          "🎉 Có bản cập nhật mới!",
-          `Phiên bản hiện tại: ${version}\nPhiên bản mới: ${latestVersion}\n\n${
-            data.body || "Nhấn 'Tải về' để cập nhật ngay!"
-          }\n\nHướng dẫn cài đặt:\n1. Tải file APK từ GitHub\n2. Mở file APK trên điện thoại\n3. Chọn 'Cài đặt' hoặc 'Cập nhật'\n4. Dữ liệu của bạn sẽ được giữ nguyên`,
-          [
-            { text: "Để sau", style: "cancel" },
-            { text: "Tải về", onPress: () => Linking.openURL(downloadUrl) },
-          ]
-        );
+        Alert.alert("🎉 Có bản cập nhật mới!", `Phiên bản hiện tại: ${version}\nPhiên bản mới: ${latestVersion}\n\n${data.body || "Nhấn 'Cập nhật' để tải về ngay!"}`, [
+          { text: "Để sau", style: "cancel" },
+          {
+            text: isDirectApk ? "Cập nhật ngay" : "Tải về",
+            onPress: () => (isDirectApk ? downloadAndInstallAPK(downloadUrl) : Linking.openURL(downloadUrl)),
+          },
+        ]);
       } else {
         Alert.alert("✅ Đã cập nhật", `Bạn đang sử dụng phiên bản mới nhất: ${version}`, [{ text: "OK" }]);
       }
     } catch (error) {
       console.log("Update check error:", error);
-      // Fallback for dev mode or errors
       if (__DEV__) {
         Alert.alert("Development Mode", "Checking GitHub Releases from Dev Mode. Ensure you have a release published.");
       } else {
@@ -97,11 +134,16 @@ export default function InfoView() {
         </View>
 
         {/* Check Update Button */}
-        <TouchableOpacity style={[styles.updateButton, isChecking && styles.updateButtonDisabled]} onPress={handleCheckUpdate} disabled={isChecking}>
+        <TouchableOpacity style={[styles.updateButton, (isChecking || isDownloading) && styles.updateButtonDisabled]} onPress={handleCheckUpdate} disabled={isChecking || isDownloading}>
           {isChecking ? (
             <>
               <ActivityIndicator color="#fff" size="small" style={{ marginRight: 10 }} />
               <Text style={styles.updateButtonText}>Đang kiểm tra...</Text>
+            </>
+          ) : isDownloading ? (
+            <>
+              <ActivityIndicator color="#fff" size="small" style={{ marginRight: 10 }} />
+              <Text style={styles.updateButtonText}>Đang tải... {Math.round(downloadProgress * 100)}%</Text>
             </>
           ) : (
             <>

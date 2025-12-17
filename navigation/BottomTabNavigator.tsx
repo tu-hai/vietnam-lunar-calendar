@@ -67,7 +67,11 @@ export default function BottomTabNavigator() {
           return (
             <View style={[styles.iconContainer, focused && styles.iconContainerActive]}>
               <Ionicons name={iconName} size={24} color={focused ? Colors.redAccent : Colors.textMuted} style={styles.icon} />
-              {!focused && <Text numberOfLines={1}>{label}</Text>}
+              {!focused && (
+                <Text style={styles.labelNoActive} numberOfLines={1}>
+                  {label}
+                </Text>
+              )}
               {focused && (
                 <Text style={styles.labelActive} numberOfLines={1}>
                   {label}
@@ -109,13 +113,11 @@ const styles = StyleSheet.create({
   iconContainer: {
     alignItems: "center",
     justifyContent: "center",
-    width: 70,
+    width: 80,
     height: 50,
     borderRadius: 20,
   },
-  iconContainerActive: {
-
-  },
+  iconContainerActive: {},
   icon: {
     marginBottom: 0,
   },
@@ -124,8 +126,14 @@ const styles = StyleSheet.create({
   },
   labelActive: {
     color: Colors.redAccent,
-   // fontSize: 13,
+    // fontSize: 13,
     fontWeight: "700",
-   // marginLeft: 4,
+    // marginLeft: 4,
+  },
+  labelNoActive: {
+    color: Colors.textMuted,
+    fontSize: 13,
+    fontWeight: "500",
+    // marginLeft: 4,
   },
 });
