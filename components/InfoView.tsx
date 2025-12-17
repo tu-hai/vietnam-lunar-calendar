@@ -3,10 +3,11 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking, Alert, A
 
 import * as FileSystem from "expo-file-system";
 import * as IntentLauncher from "expo-intent-launcher";
+import Constants from "expo-constants";
 
 export default function InfoView() {
-  const version = "1.0.0";
-  const buildNumber = "1";
+  const version = Constants.expoConfig?.version || "1.0.0";
+  const buildNumber = Constants.expoConfig?.android?.versionCode?.toString() || "1";
   const [isChecking, setIsChecking] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
