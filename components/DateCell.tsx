@@ -24,7 +24,7 @@ const DateCell = React.memo(({ day, month, year, isCurrentMonth, isToday, isSele
       <View style={styles.content}>
         <Text style={[styles.solarDay, !isCurrentMonth && styles.otherMonth, isToday && styles.todayText, isSelected && styles.selectedText, isPublicHoliday && styles.holidayText]}>{day}</Text>
         <Text style={[styles.lunarDay, !isCurrentMonth && styles.otherMonth, isSelected && styles.selectedText, isPublicHoliday && styles.holidayText]}>
-          {lunar.day === 1 ? `${lunar.month}/${lunar.day}` : lunar.day}
+          {`${lunar.day}/${lunar.month}`}
         </Text>
         {hasHoliday && <View style={styles.holidayDot} />}
       </View>
