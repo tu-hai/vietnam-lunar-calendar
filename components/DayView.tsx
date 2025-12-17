@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, LayoutAnimation, UIManager, InteractionManager, ActivityIndicator } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { convertSolar2Lunar, getYearCanChi, getGioHoangDao, getDayCanChi } from "../utils/lunarCalendar";
 import { useLocation } from "../hooks/useLocation";
@@ -206,7 +207,7 @@ export default function DayView({ route, initialDate }: DayViewProps) {
               <Text style={[styles.bigDateNumber, isExpanded && styles.bigDateNumberCollapsed]}>
                 {day}
                 {/* If expanded, render inside the Text component */}
-                {isExpanded && lunarContent}
+                {/* {isExpanded && lunarContent} */}
               </Text>
               {/* If NOT expanded, render outside as a sibling */}
               {!isExpanded && lunarContent}
@@ -229,8 +230,10 @@ export default function DayView({ route, initialDate }: DayViewProps) {
           {/* Lunar Info Grid - Redesigned */}
           <View style={styles.lunarInfoContainer}>
             <View style={styles.lunarInfoCard}>
-              <Text style={styles.lunarInfoIcon}>🌙</Text>
-              <View>
+              <View style={[styles.iconCircle, { backgroundColor: "#FFF9C4" }]}>
+                <Ionicons name="moon" size={16} color="#FBC02D" />
+              </View>
+              <View style={styles.lunarInfoTextContainer}>
                 <Text style={styles.lunarInfoLabel}>{Strings.lunar}</Text>
                 <Text style={styles.lunarInfoValue}>
                   {lunar.day}/{lunar.month}
@@ -239,8 +242,10 @@ export default function DayView({ route, initialDate }: DayViewProps) {
             </View>
 
             <View style={styles.lunarInfoCard}>
-              <Text style={styles.lunarInfoIcon}>🕰️</Text>
-              <View>
+              <View style={[styles.iconCircle, { backgroundColor: "#E1F5FE" }]}>
+                <Ionicons name="time" size={16} color="#039BE5" />
+              </View>
+              <View style={styles.lunarInfoTextContainer}>
                 <Text style={styles.lunarInfoLabel}>{Strings.hour}</Text>
                 <Text style={styles.lunarInfoValue}>
                   {new Date().getHours()}:{String(new Date().getMinutes()).padStart(2, "0")}
@@ -249,8 +254,10 @@ export default function DayView({ route, initialDate }: DayViewProps) {
             </View>
 
             <View style={styles.lunarInfoCard}>
-              <Text style={styles.lunarInfoIcon}>📅</Text>
-              <View>
+              <View style={[styles.iconCircle, { backgroundColor: "#E8F5E9" }]}>
+                <Ionicons name="calendar" size={16} color="#558B2F" />
+              </View>
+              <View style={styles.lunarInfoTextContainer}>
                 <Text style={styles.lunarInfoLabel}>{Strings.yearLabel}</Text>
                 <Text style={styles.lunarInfoValue}>{yearCanChi}</Text>
               </View>
@@ -500,35 +507,45 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 20,
-    gap: 10,
+    gap: 12,
   },
   lunarInfoCard: {
     flex: 1,
-    flexDirection: "row",
+    flexDirection: "row", // Horizontal layout for icon + text
     alignItems: "center",
     backgroundColor: Colors.lightGray,
     borderRadius: 16,
-    padding: 12,
+    padding: 10,
     // Shadow for depth
     shadowColor: Colors.shadow,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: "#F0F0F0",
   },
-  lunarInfoIcon: {
-    fontSize: 18,
-    marginRight: 4,
+  iconCircle: {
+    width: 20,
+    height: 20,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 8,
+  },
+  lunarInfoTextContainer: {
+    flex: 1,
   },
   lunarInfoLabel: {
-    fontSize: 11,
+    fontSize: 10,
     color: Colors.textMuted,
     textTransform: "uppercase",
     fontWeight: "700",
-    marginBottom: 2,
+    marginBottom: 0,
+    letterSpacing: 0.5,
   },
   lunarInfoValue: {
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: "800",
     color: Colors.text,
   },
@@ -536,7 +553,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "700",
     color: Colors.text,
     marginBottom: 15,

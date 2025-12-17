@@ -30,13 +30,12 @@ export default function InfoView() {
       }
 
       const data = await response.json();
-      const latestVersion = data.tag_name.replace("v", ""); // Remove 'v' prefix if exists
+      const latestVersion = data.tag_name.replace("v", "");
       const downloadUrl = data.html_url;
 
       const comparison = compareVersions(latestVersion, version);
 
       if (comparison > 0) {
-        // Có phiên bản mới
         Alert.alert(
           "🎉 Có bản cập nhật mới!",
           `Phiên bản hiện tại: ${version}\nPhiên bản mới: ${latestVersion}\n\n${
@@ -48,14 +47,19 @@ export default function InfoView() {
           ]
         );
       } else {
-        // Đang dùng phiên bản mới nhất
         Alert.alert("✅ Đã cập nhật", `Bạn đang sử dụng phiên bản mới nhất: ${version}`, [{ text: "OK" }]);
       }
     } catch (error) {
-      Alert.alert("Kiểm tra cập nhật", "Không thể kiểm tra phiên bản mới.\n\nBạn có thể kiểm tra thủ công tại GitHub Releases.", [
-        { text: "Đóng", style: "cancel" },
-        { text: "Mở GitHub", onPress: handleOpenGithub },
-      ]);
+      console.log("Update check error:", error);
+      // Fallback for dev mode or errors
+      if (__DEV__) {
+        Alert.alert("Development Mode", "Checking GitHub Releases from Dev Mode. Ensure you have a release published.");
+      } else {
+        Alert.alert("Kiểm tra cập nhật", "Không thể kiểm tra phiên bản mới.\n\nBạn có thể kiểm tra thủ công tại GitHub Releases.", [
+          { text: "Đóng", style: "cancel" },
+          { text: "Mở GitHub", onPress: handleOpenGithub },
+        ]);
+      }
     } finally {
       setIsChecking(false);
     }

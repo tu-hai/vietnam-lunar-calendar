@@ -16,4 +16,5 @@ export const Colors = {
   proverbText: "#2E7D32",
   publicHolidayText: "#d32f2f",
   publicHolidayBadge: "#ffebee",
+  redAccent: "#E53935",
 };

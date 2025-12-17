@@ -1,6 +1,7 @@
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { Text, StyleSheet, View, Image } from "react-native";
+import { Text, StyleSheet, View, Platform } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import DayView from "../components/DayView";
 import MonthView from "../components/MonthView";
 import EventsView from "../components/EventsView";
@@ -11,7 +12,6 @@ import { Strings } from "../constants/Strings";
 
 const Tab = createBottomTabNavigator();
 
-// Wrapped Components for Transition
 const DayScreen = (props: any) => (
   <ScreenWrapper>
     <DayView {...props} />
@@ -40,44 +40,39 @@ export default function BottomTabNavigator() {
         headerShown: false,
         freezeOnBlur: true,
         tabBarStyle: styles.tabBar,
-        tabBarShowLabel: false, // Hide default labels to use custom ones if needed, or just icons
+        tabBarShowLabel: false,
         tabBarIcon: ({ focused }) => {
-          let iconSource;
-          let label;
-          const isDayTab = route.name === Strings.calendarDay;
+          let iconName: keyof typeof Ionicons.glyphMap = "calendar";
+          let label = "";
 
           switch (route.name) {
             case Strings.calendarDay:
-              iconSource = require("../assets/icon.png");
+              iconName = focused ? "today" : "today-outline";
               label = "Ngày";
               break;
             case Strings.calendarMonth:
+              iconName = focused ? "calendar" : "calendar-outline";
               label = "Tháng";
               break;
             case Strings.events:
+              iconName = focused ? "star" : "star-outline";
               label = "Sự kiện";
               break;
             case Strings.info:
+              iconName = focused ? "information-circle" : "information-circle-outline";
               label = "Thông tin";
               break;
-            default:
-              label = "Tab";
           }
-
-          // Fallback emojis for other tabs if we don't have images yet
-          let iconEmoji;
-          if (route.name === Strings.calendarMonth) iconEmoji = "🗓️";
-          if (route.name === Strings.events) iconEmoji = "✨";
-          if (route.name === Strings.info) iconEmoji = "ℹ️";
 
           return (
             <View style={[styles.iconContainer, focused && styles.iconContainerActive]}>
-              {isDayTab ? (
-                <Image source={iconSource} style={[styles.tabIconImage, focused && styles.tabIconImageActive]} resizeMode="contain" />
-              ) : (
-                <Text style={[styles.icon, focused && styles.iconActive]}>{iconEmoji}</Text>
+              <Ionicons name={iconName} size={24} color={focused ? Colors.redAccent : Colors.textMuted} style={styles.icon} />
+              {!focused && <Text numberOfLines={1}>{label}</Text>}
+              {focused && (
+                <Text style={styles.labelActive} numberOfLines={1}>
+                  {label}
+                </Text>
               )}
-              {focused ? <Text style={styles.labelActive}>{label}</Text> : <Text style={styles.labelInactive}>{label}</Text>}
             </View>
           );
         },
@@ -95,74 +90,42 @@ const styles = StyleSheet.create({
   tabBar: {
     position: "absolute",
     bottom: 0,
-    left: 20,
-    right: 20,
-    elevation: 5,
+    left: 0,
+    right: 0,
+    elevation: 8,
     backgroundColor: Colors.white,
-    borderRadius: 25,
+    borderRadius: 0,
     height: 50,
     borderTopWidth: 0,
-    shadowColor: Colors.shadow,
+    shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 10,
+      height: 4,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.5,
-    paddingBottom: 0, // Override default padding
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    paddingBottom: 0,
   },
   iconContainer: {
     alignItems: "center",
     justifyContent: "center",
-    width: 60, // Slightly wider for inactive labels
+    width: 50,
     height: 50,
+    borderRadius: 20,
   },
   iconContainerActive: {
-    backgroundColor: Colors.darkBlue,
-    borderRadius: 25,
-    width: 110, // Expand width for label
-    flexDirection: "row", // Show icon and label side by side
-    alignItems: "center",
-    justifyContent: "center",
-    top: 6, // Float slightly higher
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-    height: 50,
+
   },
   icon: {
-    fontSize: 24,
     marginBottom: 0,
-  },
-  tabIconImage: {
-    width: 24,
-    height: 24,
-    marginBottom: 0,
-    borderRadius: 4,
-  },
-  tabIconImageActive: {
-    width: 20,
-    height: 20,
-    marginRight: 6,
-    borderRadius: 4,
-    backgroundColor: "white", // Small border effect to make it pop against dark blue
   },
   iconActive: {
-    fontSize: 20,
-    marginRight: 6,
-    marginBottom: 0,
-    color: Colors.white, // Ensure icon is white when active
+    color: Colors.redAccent,
   },
   labelActive: {
-    color: Colors.white,
-    fontSize: 12,
-    fontWeight: "bold",
-  },
-  labelInactive: {
-    fontSize: 10,
-    color: Colors.textMuted,
-    fontWeight: "500",
+    color: Colors.redAccent,
+   // fontSize: 13,
+    fontWeight: "700",
+   // marginLeft: 4,
   },
 });
