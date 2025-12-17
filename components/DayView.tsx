@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, LayoutAnimation, UIManager, InteractionManager, ActivityIndicator } from "react-native";
+import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, LayoutAnimation, UIManager, InteractionManager, ActivityIndicator, Animated } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { convertSolar2Lunar, getYearCanChi, getGioHoangDao, getDayCanChi } from "../utils/lunarCalendar";
@@ -33,6 +33,28 @@ export default function DayView({ route, initialDate }: DayViewProps) {
   const [selectedDate, setSelectedDate] = useState(paramDate || initialDate || today);
   const [isExpanded, setIsExpanded] = useState(false);
   const [isInteractionsComplete, setIsInteractionsComplete] = useState(false);
+
+
+  const navOpacity = useRef(new Animated.Value(1)).current;
+
+  // Fade out navigation arrows after 3 seconds
+  useEffect(() => {
+    // Reset opacity to 1 when component mounts or updates
+    navOpacity.setValue(1);
+
+    const timer = setTimeout(() => {
+      Animated.timing(navOpacity, {
+        toValue: 0,
+        duration: 1000,
+        useNativeDriver: true,
+      }).start();
+    }, 5000);
+
+    return () => {
+      clearTimeout(timer);
+      navOpacity.stopAnimation();
+    };
+  }, []); // Only run on mount, or should we reset on interaction? user said "after render". Let's stick to mount.
 
   useEffect(() => {
     const interactionPromise = InteractionManager.runAfterInteractions(() => {
@@ -216,14 +238,18 @@ export default function DayView({ route, initialDate }: DayViewProps) {
         </View>
 
         {/* Navigation Arrows - LEFT */}
-        <TouchableOpacity style={styles.navButtonLeft} onPress={handlePrevDay} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
-          <Ionicons name="chevron-back" size={32} color={Colors.textSecondary} style={{ opacity: 0.6 }} />
-        </TouchableOpacity>
+        <Animated.View style={[styles.navButtonLeft, { opacity: navOpacity }]} pointerEvents="box-none">
+          <TouchableOpacity onPress={handlePrevDay} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
+            <Ionicons name="chevron-back" size={32} color={Colors.textSecondary} style={{ opacity: 0.6 }} />
+          </TouchableOpacity>
+        </Animated.View>
 
         {/* Navigation Arrows - RIGHT */}
-        <TouchableOpacity style={styles.navButtonRight} onPress={handleNextDay} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
-          <Ionicons name="chevron-forward" size={32} color={Colors.textSecondary} style={{ opacity: 0.6 }} />
-        </TouchableOpacity>
+        <Animated.View style={[styles.navButtonRight, { opacity: navOpacity }]} pointerEvents="box-none">
+          <TouchableOpacity onPress={handleNextDay} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
+            <Ionicons name="chevron-forward" size={32} color={Colors.textSecondary} style={{ opacity: 0.6 }} />
+          </TouchableOpacity>
+        </Animated.View>
 
         {/* Proverb */}
         {!isExpanded && (
@@ -646,6 +672,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  // Styles moved to Animated.View in component
   navButtonLeft: {
     position: "absolute",
     left: 10,

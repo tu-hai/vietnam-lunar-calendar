@@ -1,6 +1,6 @@
-# Ứng dụng Lịch Âm Dương (Việt Nam)
+# Ứng dụng Lịch Việt (Việt Nam)
 
-Ứng dụng lịch âm dương với các ngày lễ Việt Nam được xây dựng bằng React Native và TypeScript.
+Ứng dụng Lịch Việt với các ngày lễ Việt Nam được xây dựng bằng React Native và TypeScript.
 
 ## Tính năng
 

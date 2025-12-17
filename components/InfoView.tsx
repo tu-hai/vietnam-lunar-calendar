@@ -117,7 +117,7 @@ export default function InfoView() {
         {/* App Info */}
         <View style={styles.appInfoSection}>
           <Image source={require("../assets/icon.png")} style={styles.appIconImage} />
-          <Text style={styles.appName}>Lịch Âm Dương</Text>
+          <Text style={styles.appName}>Lịch Việt Nam</Text>
           <Text style={styles.appSlogan}>Lịch Việt - Theo dõi ngày giờ tốt</Text>
         </View>
 
@@ -210,7 +210,7 @@ export default function InfoView() {
           <Text style={styles.sectionTitle}>Tính năng</Text>
           <View style={styles.featureItem}>
             <Text style={styles.featureIcon}>✓</Text>
-            <Text style={styles.featureText}>Xem lịch âm dương</Text>
+            <Text style={styles.featureText}>Xem Lịch Việt</Text>
           </View>
           <View style={styles.featureItem}>
             <Text style={styles.featureIcon}>✓</Text>
@@ -236,7 +236,7 @@ export default function InfoView() {
 
         {/* Copyright */}
         <View style={styles.copyrightSection}>
-          <Text style={styles.copyrightText}>© 2025 Lịch Âm Dương</Text>
+          <Text style={styles.copyrightText}>© {new Date().getFullYear()} Lịch Việt</Text>
           <Text style={styles.copyrightSubtext}>Made with ❤️ in Da Nang Vietnam</Text>
         </View>
       </ScrollView>

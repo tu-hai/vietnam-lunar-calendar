@@ -1,6 +1,6 @@
 # Releases
 
-Thư mục này chứa các file build APK của ứng dụng Lịch Âm Dương.
+Thư mục này chứa các file build APK của ứng dụng Lịch Việt.
 
 ## Hướng dẫn
 

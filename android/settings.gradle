@@ -44,7 +44,7 @@ if (getRNMinorVersion() >= 75) {
   }
 }
 
-rootProject.name = 'Lịch Âm Dương'
+rootProject.name = 'Lịch Việt'
 
 dependencyResolutionManagement {
   versionCatalogs {
