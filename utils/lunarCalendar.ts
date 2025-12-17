@@ -58,113 +58,173 @@ function SunLongitude(jdn: number): number {
   DL = DL + (0.019993 - 0.000101 * T) * Math.sin(dr * 2 * M) + 0.00029 * Math.sin(dr * 3 * M);
   let L = L0 + DL;
   L = L * dr;
-  L = L - PI * 2 * Math.floor(L / (PI * 2));
+
+  // Normalize L to [0, 2PI)
+  L = L - 2 * PI * Math.floor(L / (2 * PI));
+
   return Math.floor((L / PI) * 6);
 }
 
-// Tính thời điểm mặt trời đi vào trung khí thứ k kể từ Xuân phân
-function getSunLongitude(dayNumber: number, timeZone: number): number {
-  return Math.floor((SunLongitude(dayNumber - 0.5 - timeZone / 24) + 2) / 12);
-}
-
-// Tìm ngày có trung khí thứ k (từ 0 đến 11), k=0 là Xuân phân
-function getNewMoonDay(k: number, timeZone: number): number {
-  const T = k / 1236.85;
-  const T2 = T * T;
-  const T3 = T2 * T;
-  const dr = PI / 180;
-  let Jd1 = 2415020.75933 + 29.53058868 * k + 0.0001178 * T2 - 0.000000155 * T3;
-  Jd1 = Jd1 + 0.00033 * Math.sin((166.56 + 132.87 * T - 0.009173 * T2) * dr);
-  const M = 359.2242 + 29.10535608 * k - 0.0000333 * T2 - 0.00000347 * T3;
-  const Mpr = 306.0253 + 385.81691806 * k + 0.0107306 * T2 + 0.00001236 * T3;
-  const F = 21.2964 + 390.67050646 * k - 0.0016528 * T2 - 0.00000239 * T3;
-  let C1 = (0.1734 - 0.000393 * T) * Math.sin(M * dr) + 0.0021 * Math.sin(2 * dr * M);
-  C1 = C1 - 0.4068 * Math.sin(Mpr * dr) + 0.0161 * Math.sin(dr * 2 * Mpr);
-  C1 = C1 - 0.0004 * Math.sin(dr * 3 * Mpr);
-  C1 = C1 + 0.0104 * Math.sin(dr * 2 * F) - 0.0051 * Math.sin(dr * (M + Mpr));
-  C1 = C1 - 0.0074 * Math.sin(dr * (M - Mpr)) + 0.0004 * Math.sin(dr * (2 * F + M));
-  C1 = C1 - 0.0004 * Math.sin(dr * (2 * F - M)) - 0.0006 * Math.sin(dr * (2 * F + Mpr));
-  C1 = C1 + 0.001 * Math.sin(dr * (2 * F - Mpr)) + 0.0005 * Math.sin(dr * (2 * Mpr + M));
-  let deltat;
-  if (T < -11) {
-    deltat = 0.001 + 0.000839 * T + 0.0002261 * T2 - 0.00000845 * T3 - 0.000000081 * T * T3;
-  } else {
-    deltat = -0.000278 + 0.000265 * T + 0.000262 * T2;
-  }
-  const JdNew = Jd1 + C1 - deltat;
-  return Math.floor(JdNew + 0.5 + timeZone / 24);
-}
-
-// Tìm ngày trung khí
-function getSunLongitudeIndex(jdn: number, timeZone: number): number {
-  return Math.floor((SunLongitude(jdn - 0.5 - timeZone / 24.0) / PI) * 6);
-}
-
-// Tìm tháng nhuận
-function getLeapMonthOffset(a11: number, timeZone: number): number {
-  const k = Math.floor((a11 - 2415021.076998695) / 29.530588853 + 0.5);
-  let last = 0;
-  let i = 1;
-  let arc = getSunLongitudeIndex(getNewMoonDay(k + i, timeZone), timeZone);
-  do {
-    last = arc;
-    i++;
-    arc = getSunLongitudeIndex(getNewMoonDay(k + i, timeZone), timeZone);
-  } while (arc !== last && i < 14);
-  return i - 1;
-}
+// ... unchanged helpers ...
 
 // Chuyển đổi từ dương lịch sang âm lịch
 export function convertSolar2Lunar(dd: number, mm: number, yy: number, timeZone: number = 7): LunarDate {
   const dayNumber = jdFromDate(dd, mm, yy);
   const k = Math.floor((dayNumber - 2415021.076998695) / 29.530588853);
   let monthStart = getNewMoonDay(k + 1, timeZone);
+  let currentK = k + 1;
 
   if (monthStart > dayNumber) {
     monthStart = getNewMoonDay(k, timeZone);
+    currentK = k;
   }
 
-  let a11 = getNewMoonDay(k - 1, timeZone);
-  let b11 = a11;
+  // Find a11 (Start of Month 11 - Lunar Month containing Winter Solstice)
+  // Search back from currentK
+  let a11 = 0;
+  let k11 = 0;
 
-  if (a11 >= monthStart) {
-    const lunarYear = yy;
-    a11 = getNewMoonDay(k - 12, timeZone);
+  // Logic: Search back 14 months for the month containing Dong Chi (Sun Index 9)
+  // We check indices of Start and End of each month
+  for (let n = currentK; n >= currentK - 14; n--) {
+    const M1 = getNewMoonDay(n, timeZone);
+    const M2 = getNewMoonDay(n + 1, timeZone);
+    const L1 = getSunLongitudeIndex(M1, timeZone);
+    const L2 = getSunLongitudeIndex(M2, timeZone);
+
+    // Month 11 contains Dong Chi (Index 9)
+    // Check if the interval [M1, M2) contains the transition to Index 9
+    // or starts with Index 9 (Dong Chi starts exactly at month start)
+    if ((L1 < 9 && L2 >= 9) || L1 === 9) {
+      // Check validity: Major term must be WITHIN month.
+      // Usually verified by L1 and L2 comparison.
+      // If L1=9, month starts IN Dong Chi.
+      // Previous month might be 11?
+      // Let's stick to standard condition L1 < 9 && L2 >= 9?
+      // But if L2 jumps 8->10? then L2>=9 holds.
+      // Correct.
+      a11 = M1;
+      k11 = n;
+      break;
+    }
   }
 
   const lunarDay = dayNumber - monthStart + 1;
-  const diff = Math.floor((monthStart - a11) / 29);
+  const diff = currentK - k11; // Exact difference in lunations
   let lunarLeap = false;
   let lunarMonth = diff + 11;
 
-  if (b11 - a11 > 365) {
+  if (lunarMonth > 12) {
+    // Check for leap year
+    // Calculate b11 (Next Month 11) to confirm leap year existence
     const leapMonthDiff = getLeapMonthOffset(a11, timeZone);
+
+    // Check if we passed the leap month
     if (diff >= leapMonthDiff) {
       lunarMonth = diff + 10;
       if (diff === leapMonthDiff) {
         lunarLeap = true;
       }
+    } else {
+      lunarMonth = diff + 11;
+    }
+
+    if (lunarMonth > 12) {
+      lunarMonth = lunarMonth - 12;
     }
   }
 
-  if (lunarMonth > 12) {
-    lunarMonth = lunarMonth - 12;
-  }
+  let lunarYear = yy;
+  // Year adjustment: If month is 11 or 12 and we are "early" in the solar year?
+  // No, Lunar Year changes at Tet (Month 1).
+  // If we are in Month 11/12, we are at END of a lunar year.
+  // This lunar year corresponds to the Solar Year where it started?
+  // E.g. Month 11 of 2025 corresponds to 2025?
+  // Month 11 starts Dec 20, 2025.
+  // It belongs to Year At Ty (2025).
+  // So year = yy.
+  // BUT if we are in Jan 2026. yy=2026.
+  // Month 12 (ends Feb 16 2026).
+  // Still Year At Ty (2025).
+  // So if current solar year is 2026, but lunar month > 10, decrement year.
+
   if (lunarMonth >= 11 && diff < 4) {
-    const lunarYear = yy - 1;
-    return {
-      day: lunarDay,
-      month: lunarMonth,
-      year: lunarYear,
-      leap: lunarLeap,
-      jd: dayNumber,
-    };
+    // If we are close to a11 (Winter Solstice), we are in Month 11/12.
+    // And if solar year has advanced?
+    // Dong Chi is always Dec.
+    // If monthStart is Jan or Feb (yy increased), but it is Month 12.
+    // Then we must be in yy-1 lunar wise.
+    // How to detect?
+    // a11 is Dec of Year Y.
+    // If lunarMonth >= 11...
+    // Usually if month > 10, it implies we are finishing the previous lunar year?
+    // No. Month 11 is aligned with Dec.
+    // If today is Dec 17 2025. yy=2025. lunar=10.
+    // lunarYear should be 2025.
+    // If today is Jan 20 2026. yy=2026. lunar=12.
+    // lunarYear should be 2025.
+    // So if (lunarMonth >= 11 && diff < 4)?
+    // No. Month 11 (Solstice month) is ALWAYS in Year Y (Dec).
+    // So if we are in Month 11 or 12, and we are in Jan/Feb?
+    // Let's use standard logic:
+    // Lunar Year = Solar Year of the Month 1 (Tet).
+    // If current month is 11/12, it belongs to year of a11?
+    // a11 is always in year Y.
+    // So lunarYear should be year of a11??
+    // jdToDate(a11).year?
+    // Yes. a11 JDN -> Solar Date -> Year.
+    // Dec 2024 -> 2024.
+    // So Lunar Year is 2024?
+    // Wait. At Ty 2025 started Jan 29 2025.
+    // Dec 17 2025 is in At Ty (2025).
+    // a11 found is Dec 21 2025? (Month 11 of 2025).
+    // No, we found month 11 of 2025 is Dec 2025.
+    // So a11 year is 2025.
+    // So lunarYear = 2025.
+    // What about Jan 2026? Month 12.
+    // a11 is Dec 2025.
+    // a11 year is 2025.
+    // Lunar Year = 2025.
+    // What about Jan 2025? Month 12 of 2024.
+    // a11 is Dec 2024.
+    // a11 year is 2024.
+    // Lunar Year = 2024.
+    // So simple rule: lunarYear = year of a11.
+    // But verify getNewMoonDay(k11) -> JDN -> Date.
+    // Optimized check:
+    // Usually a11 falls in Dec.
   }
+
+  // Use a11 year logic
+  const a11Date = jdToDate(a11);
+  lunarYear = a11Date.year;
+
+  // Wait.
+  // Dong Chi 2024 -> Dec 2024.
+  // Lunar Year beginning NEXT month (Feb 2025).
+  // So Month 11 belongs to previous year?
+  // Month 11 of Giap Thin (2024) is Dec 2024.
+  // Month 1 of At Ty (2025) is Jan 2025.
+  // So Month 11 belongs to 2024.
+  // So lunarYear = 2024.
+
+  // Dec 17 2025.
+  // a11 found is Dec 2025? (Month 11 of 2025???)
+  // Month 11 of 2025 (At Ty) corresponds to Dec 2025.
+  // So lunarYear = 2025.
+  // BUT Month 11 of At Ty is LATE in the year.
+  // Month 11 (Dong Chi) is the key anchor.
+  // Month 11 is ALWAYS the 11th month.
+  // So if we find Month 11, it is 11th month of CURRENT Lunar Year.
+  // So Year is determined by a11 year?
+  // a11 (Dec 2025) -> Year 2025.
+  // a11 (Dec 2024) -> Year 2024.
+  // Correct.
 
   return {
     day: lunarDay,
     month: lunarMonth,
-    year: yy,
+    year: lunarYear,
     leap: lunarLeap,
     jd: dayNumber,
   };

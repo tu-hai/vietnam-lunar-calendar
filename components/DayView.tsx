@@ -215,6 +215,16 @@ export default function DayView({ route, initialDate }: DayViewProps) {
           </View>
         </View>
 
+        {/* Navigation Arrows - LEFT */}
+        <TouchableOpacity style={styles.navButtonLeft} onPress={handlePrevDay} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
+          <Ionicons name="chevron-back" size={32} color={Colors.textSecondary} style={{ opacity: 0.6 }} />
+        </TouchableOpacity>
+
+        {/* Navigation Arrows - RIGHT */}
+        <TouchableOpacity style={styles.navButtonRight} onPress={handleNextDay} hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
+          <Ionicons name="chevron-forward" size={32} color={Colors.textSecondary} style={{ opacity: 0.6 }} />
+        </TouchableOpacity>
+
         {/* Proverb */}
         {!isExpanded && (
           <View style={styles.proverbContainer}>
@@ -225,13 +235,19 @@ export default function DayView({ route, initialDate }: DayViewProps) {
 
       {/* Bottom Sheet Style Content */}
       <View style={[styles.bottomSheet, isExpanded ? styles.bottomSheetExpanded : styles.bottomSheetCollapsed]}>
-        {/* Header - Swipeable Area */}
+        {/* Header - Swipeable Area with Indicator */}
         <View {...verticalPanResponder.panHandlers}>
+          {/* Drag Handle Indicator */}
+          <TouchableOpacity style={styles.dragHandleContainer} onPress={isExpanded ? handleSwipeDown : handleSwipeUp} activeOpacity={0.7}>
+            <View style={styles.dragHandle} />
+            <Ionicons name={isExpanded ? "chevron-down" : "chevron-up"} size={20} color={Colors.textSecondary} style={{ marginTop: -4 }} />
+          </TouchableOpacity>
+
           {/* Lunar Info Grid - Redesigned */}
           <View style={styles.lunarInfoContainer}>
-            <View style={styles.lunarInfoCard}>
-              <View style={[styles.iconCircle, { backgroundColor: "#FFF9C4" }]}>
-                <Ionicons name="moon" size={16} color="#FBC02D" />
+            <View style={[styles.lunarInfoCard, { backgroundColor: Colors.lunarBg }]}>
+              <View style={[styles.iconCircle, { backgroundColor: Colors.lunarIconBg }]}>
+                <Ionicons name="moon" size={16} color="red" />
               </View>
               <View style={styles.lunarInfoTextContainer}>
                 <Text style={styles.lunarInfoLabel}>{Strings.lunar}</Text>
@@ -241,9 +257,9 @@ export default function DayView({ route, initialDate }: DayViewProps) {
               </View>
             </View>
 
-            <View style={styles.lunarInfoCard}>
-              <View style={[styles.iconCircle, { backgroundColor: "#E1F5FE" }]}>
-                <Ionicons name="time" size={16} color="#039BE5" />
+            <View style={[styles.lunarInfoCard, { backgroundColor: Colors.timeBg }]}>
+              <View style={[styles.iconCircle, { backgroundColor: Colors.timeIconBg }]}>
+                <Ionicons name="time" size={16} color="#0277BD" />
               </View>
               <View style={styles.lunarInfoTextContainer}>
                 <Text style={styles.lunarInfoLabel}>{Strings.hour}</Text>
@@ -253,9 +269,9 @@ export default function DayView({ route, initialDate }: DayViewProps) {
               </View>
             </View>
 
-            <View style={styles.lunarInfoCard}>
-              <View style={[styles.iconCircle, { backgroundColor: "#E8F5E9" }]}>
-                <Ionicons name="calendar" size={16} color="#558B2F" />
+            <View style={[styles.lunarInfoCard, { backgroundColor: Colors.yearBg }]}>
+              <View style={[styles.iconCircle, { backgroundColor: Colors.yearIconBg }]}>
+                <Ionicons name="calendar" size={16} color="#2E7D32" />
               </View>
               <View style={styles.lunarInfoTextContainer}>
                 <Text style={styles.lunarInfoLabel}>{Strings.yearLabel}</Text>
@@ -538,7 +554,7 @@ const styles = StyleSheet.create({
   },
   lunarInfoLabel: {
     fontSize: 10,
-    color: Colors.textMuted,
+    color: Colors.white,
     textTransform: "uppercase",
     fontWeight: "700",
     marginBottom: 0,
@@ -546,8 +562,8 @@ const styles = StyleSheet.create({
   },
   lunarInfoValue: {
     fontSize: 13,
-    fontWeight: "800",
-    color: Colors.text,
+    fontWeight: "bold",
+    color: Colors.white,
   },
   detailsScroll: {
     flex: 1,
@@ -607,7 +623,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   upcomingEventName: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: "600",
     color: Colors.text,
     marginBottom: 4,
@@ -622,5 +638,31 @@ const styles = StyleSheet.create({
   loadingContainer: {
     justifyContent: "center",
     alignItems: "center",
+  },
+  navButtonLeft: {
+    position: "absolute",
+    left: 10,
+    top: "50%",
+    zIndex: 20,
+    padding: 10,
+  },
+  navButtonRight: {
+    position: "absolute",
+    right: 10,
+    top: "50%",
+    zIndex: 20,
+    padding: 10,
+  },
+  dragHandleContainer: {
+    alignItems: "center",
+    paddingVertical: 5,
+    marginBottom: 10,
+  },
+  dragHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: "#E0E0E0",
+    borderRadius: 2,
+    marginBottom: 4,
   },
 });

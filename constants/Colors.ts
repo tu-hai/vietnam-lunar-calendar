@@ -17,4 +17,11 @@ export const Colors = {
   publicHolidayText: "#d32f2f",
   publicHolidayBadge: "#ffebee",
   redAccent: "#E53935",
+  // Lunar Grid Colors (Dark backgrounds for White Text)
+  lunarBg: "#283593", // Indigo 800 - Deep & Cosmic
+  lunarIconBg: "#fff", // Lower opacity for dark bg
+  timeBg: "#00695C", // Teal 800 - Time/Flow
+  timeIconBg: "#fff", // Lower opacity for dark bg
+  yearBg: "#2E7D32", // Green 800 - Nature/Growth (Keep user's choice or slightly refined)
+  yearIconBg: "#fff", // Lower opacity for dark bg
 };

@@ -15,11 +15,15 @@ export default function ZodiacHoursSection({ gioHoangDao }: ZodiacHoursSectionPr
       <View style={styles.gioHoangDaoContainer}>
         {gioHoangDao.map((gio, index) => (
           <View key={index} style={styles.gioItem}>
-            <View style={styles.gioHeader}>
-              <Text style={styles.gioIcon}>{gio.icon}</Text>
-              <Text style={styles.gioName}>{gio.gio}</Text>
+            {/* Background Icon */}
+            <View style={styles.gioIconBackgroundContainer}>
+              <Text style={styles.gioIconBackground}>{gio.icon}</Text>
             </View>
-            <Text style={styles.gioTime}>{gio.thoiGian}</Text>
+
+            <View style={styles.gioContent}>
+              <Text style={styles.gioName}>{gio.gio}</Text>
+              <Text style={styles.gioTime}>{gio.thoiGian}</Text>
+            </View>
           </View>
         ))}
       </View>
@@ -44,34 +48,45 @@ const styles = StyleSheet.create({
   },
   gioItem: {
     width: "31%",
-    backgroundColor: Colors.background,
-    borderRadius: 8,
-    padding: 4,
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    padding: 8,
     alignItems: "center",
+    justifyContent: "center",
     borderWidth: 1,
     borderColor: Colors.border,
     shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 2,
+    shadowRadius: 3,
     elevation: 2,
+    overflow: "hidden", // Clip the background icon
+    position: "relative",
+    height: 60,
   },
-  gioHeader: {
-    flexDirection: "row",
+  gioIconBackgroundContainer: {
+    position: "absolute",
+    bottom: -5,
+    right: -5,
+    opacity: 0.15,
+    zIndex: 1,
+  },
+  gioIconBackground: {
+    fontSize: 40,
+  },
+  gioContent: {
     alignItems: "center",
-    marginBottom: 2,
-  },
-  gioIcon: {
-    fontSize: 16,
-    marginRight: 4,
+    zIndex: 2,
   },
   gioName: {
-    fontSize: 12,
-    fontWeight: "600",
+    fontSize: 14,
+    fontWeight: "700",
     color: Colors.text,
+    marginBottom: 2,
   },
   gioTime: {
     fontSize: 12,
     color: Colors.textMuted,
+    fontWeight: "500",
   },
 });
